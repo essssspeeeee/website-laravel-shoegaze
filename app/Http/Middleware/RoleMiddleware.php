@@ -3,15 +3,19 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle($request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!Auth::check() || Auth::user()->role !== $role) {
-            return redirect('/login')->withErrors(['accessDenied' => 'Akses ditolak']);
+        // Mengecek apakah user sudah login dan apakah role-nya sesuai
+        if (Auth::check() && in_array($request->user()->role, $roles)) {
+            return $next($request);
         }
-        return $next($request);
+
+        // Jika tidak punya akses, lempar ke halaman 403 (Forbidden)
+        abort(403, 'Anda tidak memiliki akses ke halaman ini.');
     }
 }

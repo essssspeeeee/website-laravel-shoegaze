@@ -4,103 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shoegaze - Dashboard User</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #ffffff;
-        }
-        /* Menyembunyikan pop-up sebelum AlpineJS siap */
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
         [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="antialiased text-gray-900">
 
     <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 py-4 px-6 md:px-16 flex items-center justify-between shadow-sm">
-        
         <div class="flex-shrink-0">
             <h1 class="text-2xl font-black tracking-tighter uppercase italic" style="letter-spacing: -0.05em;">SHOEGAZE</h1>
         </div>
 
-        <div class="hidden md:flex flex-1 max-w-md mx-10"> <form action="{{ route('search') }}" method="GET" class="relative w-full">
-        <input type="text" 
-               name="query" 
-               value="{{ request('query') }}"
-               placeholder="Mau cari apa di SHOEGAZE?" 
-               class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2 px-4 pr-10 text-xs focus:bg-white focus:border-gray-200 transition-all outline-none">
+        <div class="hidden md:flex flex-1 max-w-md mx-10"> 
+            <form action="{{ route('search') }}" method="GET" class="relative w-full">
+                <input type="text" name="query" value="{{ request('query') }}" placeholder="Mau cari apa di SHOEGAZE?" 
+                       class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2 px-4 pr-10 text-xs focus:bg-white focus:border-gray-200 transition-all outline-none">
+                <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-[#db4444]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
         
-        <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-[#db4444]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </button>
-    </form>
-</div>
         <div class="flex items-center space-x-6">
-            
-            <button class="relative text-gray-700 hover:text-black transition-colors focus:outline-none">
+            <a href="{{ route('cart') }}" class="relative text-gray-700 hover:text-black transition-colors focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-            </button>
+            </a>
 
             <div class="relative" x-data="{ open: false }">
-                
                 <button @click="open = !open" @click.outside="open = false" class="text-gray-700 hover:text-black transition-colors focus:outline-none flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                 </button>
-
-                <div x-show="open" 
-                     x-cloak
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-end="opacity-0 scale-95"
-                     class="absolute right-0 mt-4 w-56 bg-white border border-gray-100 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] z-[60] py-2 overflow-hidden">
-                    
-                    <a href="{{ route('profile') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Kelola Akun Saya
-                    </a>
-                    <div class="border-t border-gray-100 my-1"></div>
-
-                    <form action="/logout" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            Logout
-                        </button>
-                    </form>
-                </div>
             </div>
-            </div>
+        </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 md:px-12 py-8">
         
         <div class="mb-14 relative rounded-xl overflow-hidden shadow-sm border border-gray-100">
             <img src="{{ asset('images/main-banner.jpg') }}" alt="Promo" class="w-full object-cover h-[300px] md:h-[400px]">
-            <div class="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent flex flex-col justify-center px-10 md:px-16">
-                <div class="max-w-xs">
-                    <span class="text-white text-sm font-semibold tracking-wider">910 NINETEN</span>
-                    <h2 class="text-white text-4xl font-black italic uppercase leading-none mt-2">GEIST EKIDEN ELITE</h2>
-                    <p class="text-white mt-5 text-sm font-bold border-b-2 border-white w-max pb-1 hover:text-gray-200 hover:border-gray-200 transition-colors cursor-pointer">Shop Now</p>
-                </div>
+            <div class="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent flex flex-col justify-center px-10 md:px-16 text-white">
+                <span class="text-sm font-semibold tracking-wider">910 NINETEN</span>
+                <h2 class="text-4xl font-black italic uppercase leading-none mt-2">GEIST EKIDEN ELITE</h2>
+                <p class="mt-5 text-sm font-bold border-b-2 border-white w-max pb-1 hover:text-gray-200 cursor-pointer">Shop Now</p>
             </div>
         </div>
 
@@ -113,27 +68,29 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
-            @for ($i = 1; $i <= 8; $i++)
-            <div class="group bg-white rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 border border-gray-50 relative flex flex-col justify-between h-full">
-                <a href="{{ route('product.detail') }}" class="block flex-1">
-                    <div>
-                        <div class="aspect-square bg-[#f5f5f5] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                            <img src="{{ asset('images/shoe-sample.png') }}" alt="Product" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
-                        </div>
-                        <h3 class="font-bold text-[11px] uppercase mb-1 leading-snug tracking-wide h-8 line-clamp-2 hover:text-[#db4444] transition-colors">HAZE FLOW ORANGE/PINK/UNGU HITAM</h3>
+            @foreach ($products as $product)
+            <div class="group bg-white rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 border border-gray-50 flex flex-col h-full">
+                <a href="{{ route('product.detail', $product->id) }}" class="block flex-1">
+                    <div class="aspect-square bg-[#f5f5f5] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                        {{-- Catatan: Pastikan asset() sesuai dengan letak folder fotomu --}}
+                        <img src="{{ asset($product->image) }}" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
                     </div>
+                    <h3 class="font-bold text-[11px] uppercase mb-1 h-8 line-clamp-2">{{ $product->name }}</h3>
                 </a>
                 
                 <div class="flex items-center justify-between mt-4">
-                    <span class="text-[#00a651] font-bold text-sm italic tracking-tight">Rp 699.900,00</span>
-                    <button class="border border-gray-200 p-2.5 rounded-full hover:bg-black hover:text-white transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <span class="text-[#00a651] font-bold text-sm italic">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                    
+                    <button 
+                        @click="addToCart('{{ $product->id }}', '{{ $product->name }}')"
+                        class="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors shadow-sm group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 group-hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </button>
                 </div>
             </div>
-            @endfor
+            @endforeach
         </div>
 
         <div class="mb-8">
@@ -176,17 +133,53 @@
 
     </main>
 
-    <footer class="bg-[#2b2d2f] text-gray-400 py-8 mt-10 text-center">
-        <p class="text-[10px] tracking-[0.2em] font-medium uppercase opacity-70 hover:opacity-100 transition-opacity">
-            &copy; FAUZAAN ESPE 2026. Seluruh hak dilindungi undang-undang.
-        </p>
+    <div x-data="{ show: false, message: '' }" 
+         @add-to-cart.window="message = $event.detail.product; show = true; setTimeout(() => show = false, 3000)"
+         x-show="show" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed bottom-5 right-5 z-[100] bg-white border-l-4 border-green-500 shadow-2xl rounded-lg p-4 flex items-center gap-4">
+        
+        <div class="bg-green-100 p-2 rounded-full text-green-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-bold text-gray-800">Berhasil ditambahkan!</p>
+            <p class="text-xs text-gray-500" x-text="message"></p>
+        </div>
+    </div>
+
+    <footer class="bg-[#2b2d2f] text-gray-400 py-8 text-center mt-10">
+        <p class="text-[10px] tracking-[0.2em] uppercase opacity-70">&copy; © FAUZAN ESPE 2026. Seluruh hak dilindungi undang-undang</p>
     </footer>
 
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-10 right-10 bg-white border border-gray-100 p-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all z-50 text-gray-600 hover:text-black">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-    </button>
-
+    <script>
+        function addToCart(productId, productName) {
+            fetch(`/cart/add/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if(response.ok) {
+                    window.dispatchEvent(new CustomEvent('add-to-cart', { 
+                        detail: { product: productName } 
+                    }));
+                } else {
+                    alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
 </body>
 </html>

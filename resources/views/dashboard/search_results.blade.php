@@ -45,13 +45,14 @@
 
     <main class="max-w-7xl mx-auto px-6 md:px-16 py-10">
         <div class="mb-8">
-            <a href="{{ url()->previous() }}" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-[#db4444] transition-colors group">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Kembali ke Halaman Sebelumnya
-            </a>
-        </div>
+    {{-- Arahkan ke '/home' karena itu jalur Dashboard User kamu di web.php --}}
+    <a href="{{ url('/home') }}" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-[#db4444] transition-colors group">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Kembali ke Dashboard
+    </a>
+</div>
 
         <div class="mb-10">
             <h2 class="text-3xl font-bold tracking-tight italic uppercase">Hasil Pencarian: "{{ $query }}"</h2>
