@@ -28,18 +28,20 @@
             <h1 class="text-2xl font-black tracking-tighter uppercase italic" style="letter-spacing: -0.05em;">SHOEGAZE</h1>
         </div>
 
-        <div class="hidden md:flex flex-1 max-w-md mx-10">
-            <div class="relative w-full">
-                <input type="text" placeholder="Mau cari apa di SHOEGAZE?" 
-                    class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2.5 px-4 pr-10 text-xs focus:ring-1 focus:ring-gray-300 focus:bg-white transition-all outline-none">
-                <div class="absolute right-3 top-2.5 text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
+        <div class="hidden md:flex flex-1 max-w-md mx-10"> <form action="{{ route('search') }}" method="GET" class="relative w-full">
+        <input type="text" 
+               name="query" 
+               value="{{ request('query') }}"
+               placeholder="Mau cari apa di SHOEGAZE?" 
+               class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2 px-4 pr-10 text-xs focus:bg-white focus:border-gray-200 transition-all outline-none">
+        
+        <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-[#db4444]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </button>
+    </form>
+</div>
         <div class="flex items-center space-x-6">
             
             <button class="relative text-gray-700 hover:text-black transition-colors focus:outline-none">
@@ -66,14 +68,13 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute right-0 mt-4 w-56 bg-white border border-gray-100 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] z-[60] py-2 overflow-hidden">
                     
-                    <a href="#" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors">
+                    <a href="{{ route('profile') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         Kelola Akun Saya
                     </a>
-
                     <div class="border-t border-gray-100 my-1"></div>
 
                     <form action="/logout" method="POST">
@@ -114,12 +115,15 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
             @for ($i = 1; $i <= 8; $i++)
             <div class="group bg-white rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 border border-gray-50 relative flex flex-col justify-between h-full">
-                <div>
-                    <div class="aspect-square bg-[#f5f5f5] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                        <img src="{{ asset('images/shoe-sample.png') }}" alt="Product" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
+                <a href="{{ route('product.detail') }}" class="block flex-1">
+                    <div>
+                        <div class="aspect-square bg-[#f5f5f5] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                            <img src="{{ asset('images/shoe-sample.png') }}" alt="Product" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
+                        </div>
+                        <h3 class="font-bold text-[11px] uppercase mb-1 leading-snug tracking-wide h-8 line-clamp-2 hover:text-[#db4444] transition-colors">HAZE FLOW ORANGE/PINK/UNGU HITAM</h3>
                     </div>
-                    <h3 class="font-bold text-[11px] uppercase mb-1 leading-snug tracking-wide h-8 line-clamp-2">HAZE FLOW ORANGE/PINK/UNGU HITAM</h3>
-                </div>
+                </a>
+                
                 <div class="flex items-center justify-between mt-4">
                     <span class="text-[#00a651] font-bold text-sm italic tracking-tight">Rp 699.900,00</span>
                     <button class="border border-gray-200 p-2.5 rounded-full hover:bg-black hover:text-white transition-all shadow-sm">
