@@ -1,0 +1,1 @@
+<h1 class="text-4xl font-bold text-center mt-20">Dashboard User</h1>
