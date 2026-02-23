@@ -15,38 +15,80 @@
 <body class="antialiased text-gray-900">
 
     <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 py-4 px-6 md:px-16 flex items-center justify-between shadow-sm">
-        <div class="flex-shrink-0">
+    <div class="flex-shrink-0">
+        <a href="{{ route('home') }}">
             <h1 class="text-2xl font-black tracking-tighter uppercase italic" style="letter-spacing: -0.05em;">SHOEGAZE</h1>
-        </div>
+        </a>
+    </div>
 
-        <div class="hidden md:flex flex-1 max-w-md mx-10"> 
-            <form action="{{ route('search') }}" method="GET" class="relative w-full">
-                <input type="text" name="query" value="{{ request('query') }}" placeholder="Mau cari apa di SHOEGAZE?" 
-                       class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2 px-4 pr-10 text-xs focus:bg-white focus:border-gray-200 transition-all outline-none">
-                <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-[#db4444]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
-            </form>
-        </div>
-        
-        <div class="flex items-center space-x-6">
-            <a href="{{ route('cart') }}" class="relative text-gray-700 hover:text-black transition-colors focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+    <div class="hidden md:flex flex-1 max-w-md mx-10"> 
+        <form action="{{ route('search') }}" method="GET" class="relative w-full">
+            <input type="text" name="query" value="{{ request('query') }}" placeholder="Mau cari apa di SHOEGAZE?" 
+                   class="w-full bg-[#f6f6f6] border border-transparent rounded-md py-2 px-4 pr-10 text-xs focus:bg-white focus:border-gray-200 transition-all outline-none">
+            <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-[#db4444]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-            </a>
+            </button>
+        </form>
+    </div>
+    
+    <div class="flex items-center space-x-6">
+        <a href="{{ route('cart') }}" class="relative text-gray-700 hover:text-black transition-colors focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            @if(session('cart') && count(session('cart')) > 0)
+                <span class="absolute -top-1 -right-1 bg-[#db4444] text-white text-[10px] font-bold px-1.5 rounded-full">
+                    {{ count(session('cart')) }}
+                </span>
+            @endif
+        </a>
 
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" @click.outside="open = false" class="text-gray-700 hover:text-black transition-colors focus:outline-none flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                </button>
+        <div class="relative" x-data="{ open: false }">
+            <button @click="open = !open" @click.outside="open = false" class="text-gray-700 hover:text-black transition-colors focus:outline-none flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </button>
+
+            <div x-show="open" 
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-lg shadow-xl py-2 z-[60]">
+                
+                <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Halo,</p>
+                    <p class="text-xs font-bold text-gray-800 truncate mt-1">{{ Auth::user()->name }}</p>
+                </div>
+
+               <a href="{{ route('profile') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+    Kelola Akun
+</a>
+
+                <hr class="my-1 border-gray-50">
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Log Out
+                    </button>
+                </form>
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <main class="max-w-7xl mx-auto px-6 md:px-12 py-8">
         

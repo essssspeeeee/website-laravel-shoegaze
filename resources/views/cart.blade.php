@@ -7,12 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        /* Menghilangkan spin button pada input number agar lebih bersih */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
@@ -41,12 +41,12 @@
             </div>
 
             <div class="divide-y divide-gray-100">
-                <template x-for="(item, index) in items" :key="item.id">
+                <template x-for="(item, id) in items" :key="id">
                     <div class="grid grid-cols-12 gap-4 p-4 items-center transition-colors hover:bg-gray-50">
                         <div class="col-span-6 flex items-center gap-4">
                             <input type="checkbox" x-model="item.selected" @change="calculateTotal()" class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer">
                             <div class="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
-                                <img src="https://via.placeholder.com/100?text=Shoe" alt="Sepatu" class="w-full h-full object-cover">
+                                <img :src="'/' + item.image" alt="Sepatu" class="w-full h-full object-cover">
                             </div>
                             <div>
                                 <span class="text-sm font-bold text-gray-800 block" x-text="item.name"></span>
@@ -58,16 +58,16 @@
 
                         <div class="col-span-2 flex justify-center items-center">
                             <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                                <button @click="decreaseQty(index)" class="px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition">-</button>
-                                <input type="number" x-model="item.qty" @change="updateQty(index, $event.target.value)" class="w-10 text-center text-sm border-none focus:ring-0 p-1 font-bold">
-                                <button @click="increaseQty(index)" class="px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition">+</button>
+                                <button @click="decreaseQty(id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition">-</button>
+                                <input type="number" x-model="item.quantity" class="w-10 text-center text-sm border-none focus:ring-0 p-1 font-bold" readonly>
+                                <button @click="increaseQty(id)" class="px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition">+</button>
                             </div>
                         </div>
 
-                        <div class="col-span-1 text-right text-sm font-black text-gray-900" x-text="formatRupiah(item.price * item.qty)"></div>
+                        <div class="col-span-1 text-right text-sm font-black text-gray-900" x-text="formatRupiah(item.price * item.quantity)"></div>
 
                         <div class="col-span-1 text-center">
-                            <button @click="removeItem(index)" class="text-gray-400 hover:text-red-500 transition">
+                            <button @click="removeItem(id)" class="text-gray-400 hover:text-red-500 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -76,7 +76,7 @@
                     </div>
                 </template>
                 
-                <div x-show="items.length === 0" class="p-12 text-center flex flex-col items-center">
+                <div x-show="Object.keys(items).length === 0" class="p-12 text-center flex flex-col items-center" x-cloak>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
@@ -86,7 +86,6 @@
         </div>
 
         <div class="flex flex-col md:flex-row justify-between items-start gap-8">
-            
             <a href="{{ route('home') }}" class="inline-flex items-center text-gray-600 font-bold hover:text-black transition group">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -98,7 +97,7 @@
                 <h3 class="text-lg font-bold mb-4 border-b border-gray-50 pb-4">Ringkasan Pesanan</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Subtotal</span>
+                        <span class="text-gray-500">Subtotal Terpilih</span>
                         <span class="font-bold text-gray-800" x-text="formatRupiah(totalAmount)"></span>
                     </div>
                     <div class="flex justify-between text-sm">
@@ -120,61 +119,48 @@
     </main>
 
     <footer class="bg-[#1f2328] text-center p-6 mt-auto">
-        <p class="text-gray-500 text-xs font-medium tracking-widest uppercase">© FAUZAN ESPE 2026. Seluruh hak dilindungi undang-undang.</p>
+        <p class="text-gray-500 text-xs font-medium tracking-widest uppercase">© FAUZAN ESPE 2026.</p>
     </footer>
 
     <script>
         function cart() {
             return {
-                selectAll: false,
+                selectAll: true,
                 totalAmount: 0,
-                // Data dummy: ganti dengan data dari database/session nanti
-                items: [
-                    { id: 1, name: '910 NINETEN GEIST EKIDEN ELITE', price: 899900, qty: 1, selected: true },
-                    { id: 2, name: 'HAZE FLOW ORANGE/PINK', price: 699900, qty: 1, selected: false },
-                ],
+                // MENGAMBIL DATA ASLI DARI LARAVEL SESSION
+                items: @json(session('cart', [])),
                 
                 toggleAll() {
-                    this.items.forEach(item => item.selected = this.selectAll);
+                    Object.values(this.items).forEach(item => item.selected = this.selectAll);
                     this.calculateTotal();
                 },
 
-                increaseQty(index) {
-                    this.items[index].qty++;
+                increaseQty(id) {
+                    this.items[id].quantity++;
                     this.calculateTotal();
                 },
 
-                decreaseQty(index) {
-                    if (this.items[index].qty > 1) {
-                        this.items[index].qty--;
+                decreaseQty(id) {
+                    if (this.items[id].quantity > 1) {
+                        this.items[id].quantity--;
                         this.calculateTotal();
                     }
                 },
 
-                updateQty(index, val) {
-                    let n = parseInt(val);
-                    if(isNaN(n) || n < 1) n = 1;
-                    this.items[index].qty = n;
-                    this.calculateTotal();
-                },
-
-                removeItem(index) {
+                removeItem(id) {
                     if(confirm('Hapus item ini dari keranjang?')) {
-                        this.items.splice(index, 1);
+                        delete this.items[id];
                         this.calculateTotal();
                     }
                 },
 
                 calculateTotal() {
-                    this.totalAmount = this.items
-                        .filter(item => item.selected)
-                        .reduce((sum, item) => sum + (item.price * item.qty), 0);
+                    this.totalAmount = Object.values(this.items)
+                        .filter(item => item.selected !== false) // Default selected jika belum ada
+                        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     
-                    if(this.items.length > 0) {
-                        this.selectAll = this.items.every(item => item.selected);
-                    } else {
-                        this.selectAll = false;
-                    }
+                    let allSelected = Object.values(this.items).every(item => item.selected !== false);
+                    this.selectAll = Object.keys(this.items).length > 0 ? allSelected : false;
                 },
 
                 formatRupiah(number) {
