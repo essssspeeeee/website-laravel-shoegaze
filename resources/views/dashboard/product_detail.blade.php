@@ -74,13 +74,12 @@
 
             <div class="w-full md:w-1/2 flex flex-col">
                 <h1 class="text-2xl font-bold uppercase tracking-wide leading-tight mb-2">
-                    HAZE FLOW ORANGE/PINK/UNGU HITAM
+                    {{ strtoupper($product->name) }}
                 </h1>
-                <p class="text-2xl font-medium text-gray-900 mb-6">Rp 899.900,00</p>
+                <p class="text-2xl font-medium text-gray-900 mb-6">Rp {{ number_format($product->price,0,',','.') }}</p>
                 
                 <div class="text-sm text-gray-600 leading-relaxed mb-8 space-y-4">
-                    <p>Haze Flow merupakan seri sepatu lari terbaru dari Nineten. Sepatu ini diperuntukkan untuk kegiatan lari Long Run baik digunakan saat Raceday dengan jarak tempuh 10k-42k.</p>
-                    <p>Haze Flow dilengkapi dengan mesh yang breathable yang ringan dengan support Hyperweb untuk menjaga kontruksi sepatu dan juga menambah nilai estetika sepatu. Pada midsole sepatu diterapkan teknologi BubbleInfused dengan karakteristik midsole yang responsif dan juga TPU Plate untuk menambah daya lontar sebagai daya dorong tambahan.</p>
+                    <p>{{ $product->description ?? 'Deskripsi produk tidak tersedia.' }}</p>
                 </div>
 
                 <hr class="mb-6">
@@ -114,7 +113,7 @@
                     
                     <button 
                         type="button"
-                        onclick="addToCart('1', 'HAZE FLOW ORANGE/PINK/UNGU HITAM')" 
+                        onclick="addToCart('{{ $product->id }}', '{{ $product->name }}')" 
                         class="flex-1 border border-gray-300 py-3 rounded-md font-semibold hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200">
                         Tambah ke Keranjang
                     </button>

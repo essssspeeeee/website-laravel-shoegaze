@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Keranjang - SHOEGAZE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -24,7 +25,7 @@
     </header>
 
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8" 
-          x-data="cart()" x-init="calculateTotal()">
+          x-data="cart" x-init="init()">
         
         <h2 class="text-2xl font-bold mb-6">Keranjang Belanja</h2>
 
@@ -111,9 +112,9 @@
                         </div>
                     </div>
                 </div>
-                <button class="w-full mt-6 bg-black hover:bg-gray-800 text-white font-black py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-gray-200 uppercase tracking-widest text-sm">
+                <a href="{{ route('checkout') }}" class="w-full mt-6 bg-black hover:bg-gray-800 text-white font-black py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-gray-200 uppercase tracking-widest text-sm text-center">
                     Checkout Sekarang
-                </button>
+                </a>
             </div>
         </div>
     </main>
@@ -122,13 +123,19 @@
         <p class="text-gray-500 text-xs font-medium tracking-widest uppercase">© FAUZAN ESPE 2026.</p>
     </footer>
 
-    <script>
+<!-- hidden container for passing PHP data to Alpine without triggering JS linter -->
+        <div id="cart-data" data-items='@json(session('cart', []))' class="hidden"></div>
+
+        <script>
         function cart() {
             return {
                 selectAll: true,
                 totalAmount: 0,
-                // MENGAMBIL DATA ASLI DARI LARAVEL SESSION
-                items: @json(session('cart', [])),
+                items: {},
+                init() {
+                    this.items = JSON.parse(document.getElementById('cart-data').dataset.items);
+                    this.calculateTotal();
+                },
                 
                 toggleAll() {
                     Object.values(this.items).forEach(item => item.selected = this.selectAll);
@@ -150,6 +157,15 @@
                 removeItem(id) {
                     if(confirm('Hapus item ini dari keranjang?')) {
                         delete this.items[id];
+                        // send to server if logged in
+                        fetch(`/cart/remove/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
                         this.calculateTotal();
                     }
                 },

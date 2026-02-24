@@ -38,11 +38,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            @if(session('cart') && count(session('cart')) > 0)
-                <span class="absolute -top-1 -right-1 bg-[#db4444] text-white text-[10px] font-bold px-1.5 rounded-full">
-                    {{ count(session('cart')) }}
-                </span>
-            @endif
+            @php $cartCount = session('cart') ? count(session('cart')) : 0; @endphp
+            <span id="cart-badge" class="absolute -top-1 -right-1 bg-[#db4444] text-white text-[10px] font-bold px-1.5 rounded-full {{ $cartCount > 0 ? '' : 'hidden' }}">
+                {{ $cartCount }}
+            </span>
         </a>
 
         <div class="relative" x-data="{ open: false }">
@@ -124,7 +123,7 @@
                     <span class="text-[#00a651] font-bold text-sm italic">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
                     
                     <button 
-                        @click="addToCart('{{ $product->id }}', '{{ $product->name }}')"
+                        onclick="addToCart('{{ $product->id }}', '{{ $product->name }}')"
                         class="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors shadow-sm group">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 group-hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -212,14 +211,27 @@
                 }
             }).then(response => {
                 if(response.ok) {
-                    window.dispatchEvent(new CustomEvent('add-to-cart', { 
-                        detail: { product: productName } 
-                    }));
-                } else {
-                    alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
+                    return response.json();
                 }
+                throw new Error('Gagal menambahkan ke keranjang');
+            }).then(data => {
+                // update badge
+                const badge = document.getElementById('cart-badge');
+                if (badge) {
+                    if (data.count && data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('add-to-cart', { 
+                    detail: { product: productName } 
+                }));
             }).catch(error => {
                 console.error('Error:', error);
+                alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
             });
         }
     </script>

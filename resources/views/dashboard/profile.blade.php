@@ -115,7 +115,7 @@
                     <h2 class="text-2xl font-bold text-gray-800">Edit Profil Kamu</h2>
                 </div>
                 
-                <form action="{{ route('profile.custom.update') }}" method="POST" class="px-8 pb-8">
+                <form action="{{ route('profile.update') }}" method="POST" class="px-8 pb-8">
                     @csrf
                     @method('PATCH')
                     

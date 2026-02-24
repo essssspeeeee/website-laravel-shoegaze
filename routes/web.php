@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CartController;
+use App\Models\Product;
 
 // --- Public Routes ---
 Route::get('/', function () {
@@ -47,6 +48,9 @@ Route::middleware(['auth'])->group(function () {
         // Fitur Keranjang
         Route::get('/cart', [CartController::class, 'index'])->name('cart'); 
         Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+        Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+        // Checkout page
+        Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     });
 
     // 4. Fitur Umum (Bisa diakses semua role setelah login)
@@ -61,7 +65,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Detail Produk
     Route::get('/product/detail/{id}', function ($id) {
-        return view('dashboard.product_detail'); 
+        $product = Product::findOrFail($id);
+        return view('dashboard.product_detail', compact('product'));
     })->name('product.detail');
 
 });
