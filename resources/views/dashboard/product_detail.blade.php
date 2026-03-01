@@ -12,6 +12,7 @@
         [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
         .size-btn.active { background-color: #db4444; color: white; border-color: #db4444; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body class="antialiased text-gray-900 flex flex-col min-h-screen">
@@ -53,22 +54,15 @@
 
         <div class="flex flex-col md:flex-row gap-10">
             <div class="flex gap-4 w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300">
-                        <img src="https://via.placeholder.com/100" alt="thumb1" class="w-full h-full object-contain">
-                    </div>
-                    <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300">
-                        <img src="https://via.placeholder.com/100" alt="thumb2" class="w-full h-full object-contain">
-                    </div>
-                    <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300">
-                        <img src="https://via.placeholder.com/100" alt="thumb3" class="w-full h-full object-contain">
-                    </div>
-                    <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300">
-                        <img src="https://via.placeholder.com/100" alt="sizechart" class="w-full h-full object-contain">
-                    </div>
+                <div x-data="gallery()" class="flex flex-col gap-4">
+                    <template x-for="(img,idx) in images" :key="idx">
+                        <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300" @click="setMain(idx)">
+                            <img :src="img" class="w-full h-full object-contain">
+                        </div>
+                    </template>
                 </div>
                 <div class="flex-1 bg-[#f6f6f6] rounded-xl flex items-center justify-center p-10 h-[500px]">
-                    <img src="https://via.placeholder.com/500" id="mainImg" class="max-w-full max-h-full object-contain drop-shadow-2xl">
+                    <img :src="mainImage" class="max-w-full max-h-full object-contain drop-shadow-2xl">
                 </div>
             </div>
 
@@ -84,39 +78,47 @@
 
                 <hr class="mb-6">
 
-                <div class="flex items-center gap-4 mb-8">
-                    <span class="text-lg font-semibold">Ukuran:</span>
-                    <div class="flex gap-2 flex-wrap">
-                        @foreach([39, 40, 41, 42, 43, 44, 45] as $size)
-                            <button onclick="selectSize(this)" class="size-btn w-10 h-10 border border-gray-300 rounded flex items-center justify-center text-sm font-medium transition-all hover:border-[#db4444]">
-                                {{ $size }}
-                            </button>
-                        @endforeach
+                <div x-data="sizes(@json($product->stock), @json($product->id), @json($product->name))" class="flex flex-col">
+                    <div class="flex items-center gap-4 mb-8">
+                        <span class="text-lg font-semibold">Ukuran:</span>
+                        <div class="flex gap-2 flex-wrap">
+                            <template x-for="size in ['39','40','41','42','43']" :key="size">
+                                <button :class="['size-btn','w-10','h-10','border','border-gray-300','rounded','flex','items-center','justify-center','text-sm','font-medium','transition-all', selected==size?'active':'', (stock[size] ?? 0) <= 0 ? 'opacity-50 cursor-not-allowed' : '']"
+                                        :disabled="(stock[size] ?? 0) <= 0"
+                                        @click="select(size)"
+                                        x-text="size">
+                                </button>
+                            </template>
+                        </div>
+                        <div class="ml-4 text-sm" x-show="selected">
+                            <span x-text="stock[selected] == 0 ? 'Stok Habis' : 'Sisa ' + stock[selected] + ' pasang'"></span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="flex border border-gray-300 rounded overflow-hidden">
-                        <button onclick="changeQty(-1)" class="px-4 py-2 hover:bg-gray-100 border-r">-</button>
-                        <input type="number" id="qty" value="1" class="w-12 text-center outline-none" readonly>
-                        <button onclick="changeQty(1)" class="px-4 py-2 hover:bg-gray-100 border-l">+</button>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex border border-gray-300 rounded overflow-hidden">
+                            <button @click="decrease" class="px-4 py-2 hover:bg-gray-100 border-r">-</button>
+                            <input type="number" x-model="qty" class="w-12 text-center outline-none" readonly>
+                            <button @click="increase" class="px-4 py-2 hover:bg-gray-100 border-l">+</button>
+                        </div>
+                        <button :disabled="!canProceed()" @click="buyNow()" class="flex-1 bg-[#db4444] text-white font-bold py-3 rounded-md hover:bg-red-600 transition-all shadow-lg shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Beli Sekarang
+                        </button>
                     </div>
-                    <button class="flex-1 bg-[#db4444] text-white font-bold py-3 rounded-md hover:bg-red-600 transition-all shadow-lg shadow-red-200">
-                        Beli Sekarang
-                    </button>
-                </div>
 
-                <div class="flex gap-4">
-                    <a href="{{ url()->previous() }}" class="flex-1 border border-gray-300 text-center py-3 rounded-md font-semibold hover:bg-gray-50 transition-all">
-                        Kembali
-                    </a>
-                    
-                    <button 
-                        type="button"
-                        onclick="addToCart('{{ $product->id }}', '{{ $product->name }}')" 
-                        class="flex-1 border border-gray-300 py-3 rounded-md font-semibold hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200">
-                        Tambah ke Keranjang
-                    </button>
+                    <div class="flex gap-4">
+                        <a href="{{ url()->previous() }}" class="flex-1 border border-gray-300 text-center py-3 rounded-md font-semibold hover:bg-gray-50 transition-all">
+                            Kembali
+                        </a>
+                        
+                        <button 
+                            type="button"
+                            :disabled="!canProceed()"
+                            @click="addToCart()"
+                            class="flex-1 border border-gray-300 py-3 rounded-md font-semibold hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Tambah ke Keranjang
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -155,21 +157,59 @@
     </div>
 
     <script>
-        // Fitur Pemilihan Ukuran
-        function selectSize(btn) {
-            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // Alpine component for product images gallery
+        function gallery() {
+            const imgs = @json($product->images) || [];
+            return {
+                images: imgs.length ? imgs : ['https://via.placeholder.com/500'],
+                mainImage: imgs.length ? imgs[0] : 'https://via.placeholder.com/500',
+                setMain(i) {
+                    this.mainImage = this.images[i];
+                }
+            }
         }
 
-        // Fitur Tambah/Kurang Jumlah
-        function changeQty(amt) {
-            const input = document.getElementById('qty');
-            let val = parseInt(input.value) + amt;
-            if(val < 1) val = 1;
-            input.value = val;
+        // Alpine component for sizes, quantity, and actions
+        function sizes(stock, productId, productName) {
+            return {
+                stock: stock,
+                productId: productId,
+                productName: productName,
+                selected: null,
+                qty: 1,
+                select(size) {
+                    if (this.stock[size] === 0) return;
+                    this.selected = size;
+                    this.qty = 1;
+                },
+                increase() {
+                    if (this.selected) {
+                        const max = this.stock[this.selected] || 1;
+                        if (this.qty < max) this.qty++;
+                    } else {
+                        this.qty++;
+                    }
+                },
+                decrease() {
+                    if (this.qty > 1) this.qty--;
+                },
+
+                canProceed() {
+                    return this.selected && this.stock[this.selected] > 0;
+                },
+                addToCart() {
+                    if (!this.canProceed()) return;
+                    window.addToCart(this.productId, this.productName);
+                },
+                buyNow() {
+                    if (!this.canProceed()) return;
+                    this.addToCart();
+                    window.location.href = '/checkout';
+                }
+            }
         }
 
-        // Fitur Tambah ke Keranjang
+        // Fitur Tambah ke Keranjang (global fallback)
         function addToCart(productId, productName) {
             fetch(`/cart/add/${productId}`, {
                 method: 'POST',
@@ -181,9 +221,8 @@
             })
             .then(response => {
                 if(response.ok) {
-                    // Memicu event AlpineJS untuk memunculkan pop-up hijau
                     window.dispatchEvent(new CustomEvent('add-to-cart', { 
-                        detail: { product: productName } 
+                        detail: { product: productName || '' } 
                     }));
                 } else {
                     console.error("Gagal menambahkan barang");

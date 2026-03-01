@@ -9,5 +9,16 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'price', 'image'];
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'stock',      // json array: {"39":10, ...}
+        'images',     // json array of stored paths
+    ];
+
+    protected $casts = [
+        'stock' => 'array',
+        'images' => 'array',
+    ];
 }

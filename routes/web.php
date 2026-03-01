@@ -30,15 +30,68 @@ Route::middleware(['auth'])->group(function () {
     // 1. Dashboard Admin
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin/dashboard', function () {
-            return view('dashboard.admin');
+            $totalProducts = \App\Models\Product::count();
+            $totalOrders   = \App\Models\Transaction::count();
+            $totalUsers    = \App\Models\User::count();
+            $totalRevenue  = \App\Models\Transaction::where('status','valid')->sum('total');
+            $latestOrders  = \App\Models\Transaction::with('user')
+                                ->orderBy('id','desc')
+                                ->limit(3)
+                                ->get();
+            return view('dashboard.admin', compact(
+                'totalProducts','totalOrders','totalUsers','totalRevenue','latestOrders'
+            ));
         })->name('admin.dashboard');
+
+        // resourceful product management for admins
+        Route::namespace('App\\Http\\Controllers\\Admin')
+            ->prefix('admin')
+            ->name('admin.')
+            ->group(function () {
+                Route::resource('products', 'ProductController')->except(['show']);
+                Route::resource('orders', 'OrderController')->only(['index','update']);
+                Route::resource('users', 'UserController')->except(['show']);
+                Route::get('history', 'HistoryController@index')->name('history');
+            });
     });
 
     // 2. Dashboard Petugas
     Route::middleware(['role:petugas'])->group(function () {
         Route::get('/staff/dashboard', function () {
-            return view('dashboard.petugas');
+            $totalProducts = \App\Models\Product::count();
+            $totalOrders   = \App\Models\Transaction::count();
+            $totalUsers    = \App\Models\User::count();
+            $totalRevenue  = \App\Models\Transaction::where('status','valid')->sum('total');
+            $latestOrders  = \App\Models\Transaction::with('user')
+                                ->orderBy('id','desc')
+                                ->limit(3)
+                                ->get();
+            return view('dashboard.petugas', compact(
+                'totalProducts','totalOrders','totalUsers','totalRevenue','latestOrders'
+            ));
         })->name('staff.dashboard');
+
+        // Kelola produk untuk petugas (sama seperti admin)
+        Route::namespace('App\\Http\\Controllers\\Admin')
+            ->prefix('staff')
+            ->name('staff.')
+            ->group(function () {
+                Route::resource('products', 'ProductController')->except(['show']);
+                // permit petugas to view orders as well
+                Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+                Route::patch('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('orders.update');
+                // riwayat pesanan untuk petugas (sama seperti admin)
+                Route::get('history', 'HistoryController@index')->name('history');
+
+                // sales report page for petugas with simple statistics
+                Route::get('sales', function () {
+                    $total     = \App\Models\Transaction::count();
+                    $valid     = \App\Models\Transaction::where('status', 'valid')->count();
+                    $waiting   = \App\Models\Transaction::where('status', 'waiting')->count();
+                    $rejected  = \App\Models\Transaction::where('status', 'rejected')->count();
+                    return view('dashboard.staff_sales', compact('total','valid','waiting','rejected'));
+                })->name('sales');
+            });
     });
 
     // 3. Dashboard User & Fitur Belanja (Khusus Role User)
