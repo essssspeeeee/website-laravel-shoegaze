@@ -154,12 +154,8 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Upload Gambar Produk (max 5)</label>
-                            <input type="file" name="images[]" accept="image/*" class="w-full mb-1">
-                            <input type="file" name="images[]" accept="image/*" class="w-full mb-1">
-                            <input type="file" name="images[]" accept="image/*" class="w-full mb-1">
-                            <input type="file" name="images[]" accept="image/*" class="w-full mb-1">
-                            <input type="file" name="images[]" accept="image/*" class="w-full">
-                            <small class="text-gray-500">Tiap file JPG/PNG maks. 5MB</small>
+                            <input type="file" name="images[]" accept="image/*" multiple class="w-full" />
+                            <small class="text-gray-500">Pilih hingga 5 file JPG/PNG, masing-masing maksimal 5MB.</small>
                             @error('images')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             @error('images.*')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>

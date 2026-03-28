@@ -6,13 +6,61 @@
     <title>Detail Produk - SHOEGAZE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
-        .size-btn.active { background-color: #db4444; color: white; border-color: #db4444; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        body { font-family: 'Poppins', sans-serif; background-color: #ffffff; }
+
+        .thumbnail-btn {
+            aspect-ratio: 1 / 1;
+            border: 1px solid #E5E7EB;
+            border-radius: 1.25rem;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .thumbnail-btn:hover {
+            border-color: #E55353;
+            transform: translateY(-1px);
+        }
+
+        .border-danger {
+            border-color: #E55353 !important;
+        }
+
+        .size-button {
+            background: #ffffff;
+            border: 1px solid #D1D5DB;
+            color: #111827;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .size-button.active {
+            background: #E55353;
+            color: #ffffff;
+            border-color: #E55353;
+        }
+
+        .size-button.disabled {
+            background: #F3F4F6;
+            color: #9CA3AF;
+            border-color: #E5E7EB;
+            cursor: not-allowed;
+        }
+
+        .btn-buy {
+            background: #E55353;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-900 flex flex-col min-h-screen">
@@ -49,76 +97,103 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 md:px-16 py-10 flex-grow">
+    <main class="max-w-8xl mx-auto px-6 md:px-16 py-10 flex-grow">
         <h2 class="text-3xl font-bold mb-10">Detail Produk</h2>
 
-        <div class="flex flex-col md:flex-row gap-10">
-            <div class="flex gap-4 w-full md:w-1/2">
-                <div x-data="gallery()" class="flex flex-col gap-4">
-                    <template x-for="(img,idx) in images" :key="idx">
-                        <div class="w-24 h-24 bg-[#f6f6f6] rounded-md p-2 cursor-pointer border border-transparent hover:border-gray-300" @click="setMain(idx)">
-                            <img :src="img" class="w-full h-full object-contain">
-                        </div>
-                    </template>
+        <div class="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-5 xl:gap-12">
+            <div x-data="gallery()" class="flex flex-col md:flex-row gap-5">
+                <div class="flex flex-col gap-4 w-[100px]">
+                    @foreach($product->images ?? [] as $index => $image)
+                        <button type="button"
+                            @click="setMain({{ $index }})"
+                            :class="['thumbnail-btn overflow-hidden', selectedImage === {{ $index }} ? 'border-[#E55353]' : 'border-gray-200']">
+                            <img src="{{ asset('storage/' . $image) }}" class="w-full h-full object-cover">
+                        </button>
+                    @endforeach
                 </div>
-                <div class="flex-1 bg-[#f6f6f6] rounded-xl flex items-center justify-center p-10 h-[500px]">
+
+                <div class="flex-1 bg-[#f6f6f6] rounded-[28px] p-6 flex items-center justify-center min-h-[520px]">
                     <img :src="mainImage" class="max-w-full max-h-full object-contain drop-shadow-2xl">
                 </div>
             </div>
 
-            <div class="w-full md:w-1/2 flex flex-col">
-                <h1 class="text-2xl font-bold uppercase tracking-wide leading-tight mb-2">
-                    {{ strtoupper($product->name) }}
-                </h1>
-                <p class="text-2xl font-medium text-gray-900 mb-6">Rp {{ number_format($product->price,0,',','.') }}</p>
-                
-                <div class="text-sm text-gray-600 leading-relaxed mb-8 space-y-4">
-                    <p>{{ $product->description ?? 'Deskripsi produk tidak tersedia.' }}</p>
-                </div>
+            <div class="flex flex-col justify-between">
+                <div class="space-y-8">
+                    <div class="space-y-4">
+                        <h1 class="text-3xl md:text-4xl font-black uppercase tracking-tight leading-tight">
+                            {{ strtoupper($product->name) }}
+                        </h1>
+                        <p class="text-3xl font-semibold text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
+                    </div>
 
-                <hr class="mb-6">
+                    <div class="text-sm text-gray-600 leading-relaxed space-y-4">
+                        <p>{{ $product->description ?? 'Deskripsi produk tidak tersedia.' }}</p>
+                    </div>
 
-                <div x-data="sizes(@json($product->stock), @json($product->id), @json($product->name))" class="flex flex-col">
-                    <div class="flex items-center gap-4 mb-8">
-                        <span class="text-lg font-semibold">Ukuran:</span>
-                        <div class="flex gap-2 flex-wrap">
-                            <template x-for="size in ['39','40','41','42','43']" :key="size">
-                                <button :class="['size-btn','w-10','h-10','border','border-gray-300','rounded','flex','items-center','justify-center','text-sm','font-medium','transition-all', selected==size?'active':'', (stock[size] ?? 0) <= 0 ? 'opacity-50 cursor-not-allowed' : '']"
-                                        :disabled="(stock[size] ?? 0) <= 0"
-                                        @click="select(size)"
-                                        x-text="size">
+                    <form id="product_form" action="{{ route('cart.add', $product->id) }}" method="POST" class="space-y-8">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="size" id="selected_size" value="">
+                        <input type="hidden" name="quantity" id="selected_quantity" value="1">
+                        <input type="hidden" name="action" id="selected_action" value="cart">
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-semibold">Ukuran</span>
+                                <span class="text-sm text-gray-500">Pilih ukuran yang tersedia</span>
+                            </div>
+
+                            <div class="grid grid-cols-5 gap-3 max-w-[280px]" id="size_buttons">
+                                @foreach(['39','40','41','42','43'] as $size)
+                                    @php $stockValue = $product->stock[$size] ?? 0; @endphp
+                                    <button type="button"
+                                        class="size-button h-12 rounded-[18px] {{ $stockValue <= 0 ? 'disabled' : '' }}"
+                                        data-size="{{ $size }}"
+                                        data-stock="{{ $stockValue }}"
+                                        {{ $stockValue <= 0 ? 'disabled' : '' }}>
+                                        {{ $size }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <p class="text-sm text-gray-500" id="size_info">Silakan pilih ukuran terlebih dahulu.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr] items-center">
+                            <div class="flex items-center border border-gray-300 rounded-2xl overflow-hidden max-w-[200px] h-14">
+                                <button type="button" id="qty_decrease"
+                                    class="px-4 h-full text-lg font-bold text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center">
+                                    -
                                 </button>
-                            </template>
-                        </div>
-                        <div class="ml-4 text-sm" x-show="selected">
-                            <span x-text="stock[selected] == 0 ? 'Stok Habis' : 'Sisa ' + stock[selected] + ' pasang'"></span>
-                        </div>
-                    </div>
+                                <input type="text" id="quantity_display" value="1" class="w-16 h-full text-center border-x border-gray-300 outline-none text-sm" readonly>
+                                <button type="button" id="qty_increase"
+                                    class="px-4 h-full text-lg font-bold text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center">
+                                    +
+                                </button>
+                            </div>
 
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="flex border border-gray-300 rounded overflow-hidden">
-                            <button @click="decrease" class="px-4 py-2 hover:bg-gray-100 border-r">-</button>
-                            <input type="number" x-model="qty" class="w-12 text-center outline-none" readonly>
-                            <button @click="increase" class="px-4 py-2 hover:bg-gray-100 border-l">+</button>
+                            <button type="submit"
+                                id="buy_button"
+                                data-action="buy"
+                                disabled
+                                class="w-full btn-buy h-14 rounded-2xl shadow-lg shadow-[#E55353]/20 transition-all hover:bg-[#d04141] disabled:opacity-50 disabled:cursor-not-allowed">
+                                Beli Sekarang
+                            </button>
                         </div>
-                        <button :disabled="!canProceed()" @click="buyNow()" class="flex-1 bg-[#db4444] text-white font-bold py-3 rounded-md hover:bg-red-600 transition-all shadow-lg shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Beli Sekarang
-                        </button>
-                    </div>
 
-                    <div class="flex gap-4">
-                        <a href="{{ url()->previous() }}" class="flex-1 border border-gray-300 text-center py-3 rounded-md font-semibold hover:bg-gray-50 transition-all">
-                            Kembali
-                        </a>
-                        
-                        <button 
-                            type="button"
-                            :disabled="!canProceed()"
-                            @click="addToCart()"
-                            class="flex-1 border border-gray-300 py-3 rounded-md font-semibold hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Tambah ke Keranjang
-                        </button>
-                    </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <a href="{{ url()->previous() }}" class="block border border-gray-300 text-center py-3 rounded-2xl font-semibold hover:bg-gray-50 transition-all">
+                                Kembali
+                            </a>
+                            <button type="submit"
+                                id="add_cart_button"
+                                data-action="cart"
+                                disabled
+                                class="block w-full border border-gray-300 py-3 rounded-2xl font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -157,81 +232,131 @@
     </div>
 
     <script>
-        // Alpine component for product images gallery
         function gallery() {
-            const imgs = @json($product->images) || [];
+            const rawImages = @json($product->images ?? []) || [];
+            const basePath = '{{ asset('storage') }}';
+            const images = rawImages.length
+                ? rawImages.map(image => image ? basePath + '/' + image : null).filter(Boolean)
+                : [];
+
             return {
-                images: imgs.length ? imgs : ['https://via.placeholder.com/500'],
-                mainImage: imgs.length ? imgs[0] : 'https://via.placeholder.com/500',
+                images: images.length ? images : ['https://via.placeholder.com/500'],
+                mainImage: images.length ? images[0] : 'https://via.placeholder.com/500',
+                selectedImage: 0,
                 setMain(i) {
                     this.mainImage = this.images[i];
+                    this.selectedImage = i;
                 }
             }
         }
 
-        // Alpine component for sizes, quantity, and actions
-        function sizes(stock, productId, productName) {
-            return {
-                stock: stock,
-                productId: productId,
-                productName: productName,
-                selected: null,
-                qty: 1,
-                select(size) {
-                    if (this.stock[size] === 0) return;
-                    this.selected = size;
-                    this.qty = 1;
-                },
-                increase() {
-                    if (this.selected) {
-                        const max = this.stock[this.selected] || 1;
-                        if (this.qty < max) this.qty++;
-                    } else {
-                        this.qty++;
-                    }
-                },
-                decrease() {
-                    if (this.qty > 1) this.qty--;
-                },
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('product_form');
+            const sizeButtons = document.querySelectorAll('#size_buttons button[data-size]');
+            const selectedSizeInput = document.getElementById('selected_size');
+            const quantityDisplay = document.getElementById('quantity_display');
+            const selectedQuantityInput = document.getElementById('selected_quantity');
+            const selectedActionInput = document.getElementById('selected_action');
+            const sizeInfo = document.getElementById('size_info');
+            const buyButton = document.getElementById('buy_button');
+            const addCartButton = document.getElementById('add_cart_button');
+            const decreaseButton = document.getElementById('qty_decrease');
+            const increaseButton = document.getElementById('qty_increase');
 
-                canProceed() {
-                    return this.selected && this.stock[this.selected] > 0;
-                },
-                addToCart() {
-                    if (!this.canProceed()) return;
-                    window.addToCart(this.productId, this.productName);
-                },
-                buyNow() {
-                    if (!this.canProceed()) return;
-                    this.addToCart();
-                    window.location.href = '/checkout';
-                }
+            let selectedSize = null;
+            let selectedStock = 0;
+            let qty = 1;
+
+            function updateButtons() {
+                const enabled = Boolean(selectedSize);
+                buyButton.disabled = !enabled;
+                addCartButton.disabled = !enabled;
             }
-        }
 
-        // Fitur Tambah ke Keranjang (global fallback)
-        function addToCart(productId, productName) {
-            fetch(`/cart/add/${productId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if(response.ok) {
-                    window.dispatchEvent(new CustomEvent('add-to-cart', { 
-                        detail: { product: productName || '' } 
-                    }));
+            function updateQuantity() {
+                if (qty < 1) qty = 1;
+                if (selectedSize && qty > selectedStock) qty = selectedStock;
+                quantityDisplay.value = qty;
+                selectedQuantityInput.value = qty;
+            }
+
+            function updateSizeInfo() {
+                if (!selectedSize) {
+                    sizeInfo.textContent = 'Silakan pilih ukuran terlebih dahulu.';
+                } else if (selectedStock === 0) {
+                    sizeInfo.textContent = 'Stok habis';
                 } else {
-                    console.error("Gagal menambahkan barang");
+                    sizeInfo.textContent = 'Sisa ' + selectedStock + ' pasang';
                 }
-            })
-            .catch(error => {
-                console.error('Error Jaringan:', error);
+            }
+
+            function clearActiveSize() {
+                sizeButtons.forEach(button => {
+                    button.classList.remove('border-danger');
+                });
+            }
+
+            sizeButtons.forEach(button => {
+                const stock = parseInt(button.dataset.stock || '0', 10);
+                if (stock <= 0) {
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+
+                button.addEventListener('click', function () {
+                    if (button.disabled) return;
+
+                    selectedSize = button.dataset.size;
+                    selectedStock = stock;
+                    qty = 1;
+                    selectedSizeInput.value = selectedSize;
+                    selectedActionInput.value = 'cart';
+                    clearActiveSize();
+                    button.classList.add('border-danger');
+                    updateQuantity();
+                    updateSizeInfo();
+                    updateButtons();
+                });
             });
-        }
+
+            decreaseButton.addEventListener('click', function () {
+                if (!selectedSize) return;
+                if (qty > 1) {
+                    qty -= 1;
+                    updateQuantity();
+                }
+            });
+
+            increaseButton.addEventListener('click', function () {
+                if (!selectedSize) return;
+                if (qty < selectedStock) {
+                    qty += 1;
+                    updateQuantity();
+                }
+            });
+
+            buyButton.addEventListener('click', function () {
+                selectedActionInput.value = 'buy';
+            });
+
+            addCartButton.addEventListener('click', function () {
+                selectedActionInput.value = 'cart';
+            });
+
+            form.addEventListener('submit', function (event) {
+                if (!selectedSize) {
+                    event.preventDefault();
+                    alert('Silakan pilih ukuran terlebih dahulu!');
+                    return;
+                }
+
+                selectedSizeInput.value = selectedSize;
+                updateQuantity();
+            });
+
+            updateButtons();
+            updateQuantity();
+            updateSizeInfo();
+        });
     </script>
 </body>
 </html>

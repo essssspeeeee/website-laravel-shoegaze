@@ -112,9 +112,12 @@
             @foreach ($products as $product)
             <div class="group bg-white rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 border border-gray-50 flex flex-col h-full">
                 <a href="{{ route('product.detail', $product->id) }}" class="block flex-1">
-                    <div class="aspect-square bg-[#f5f5f5] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                        {{-- Catatan: Pastikan asset() sesuai dengan letak folder fotomu --}}
-                        <img src="{{ asset($product->image) }}" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
+                    <div class="aspect-square bg-[#f5f6f8] rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                        @php
+                            $firstImage = is_array($product->images) && count($product->images) ? $product->images[0] : null;
+                        @endphp
+                        <img src="{{ $firstImage ? asset('storage/' . $firstImage) : asset('images/default-product.png') }}"
+                             alt="{{ $product->name }}" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
                     </div>
                     <h3 class="font-bold text-[11px] uppercase mb-1 h-8 line-clamp-2">{{ $product->name }}</h3>
                 </a>

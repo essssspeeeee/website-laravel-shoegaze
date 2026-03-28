@@ -12,20 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (Schema::hasColumn('products', 'image')) {
-                $table->dropColumn('image');
-            }
-            if (! Schema::hasColumn('products', 'images')) {
-                $table->json('images')->nullable()->after('price');
+            if (! Schema::hasColumn('products', 'stock')) {
+                $table->json('stock')->nullable()->after('price');
             }
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (Schema::hasColumn('products', 'images')) {
-                $table->dropColumn('images');
+            if (Schema::hasColumn('products', 'stock')) {
+                $table->dropColumn('stock');
             }
         });
     }

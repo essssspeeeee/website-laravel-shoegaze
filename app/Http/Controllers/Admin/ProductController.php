@@ -39,23 +39,27 @@ class ProductController extends Controller
             'stock.41'    => 'required|integer|min:0',
             'stock.42'    => 'required|integer|min:0',
             'stock.43'    => 'required|integer|min:0',
-            'images'      => 'nullable|array|max:5',
-            'images.*'    => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'images'      => 'sometimes|array|max:5',
+            'images.*'    => 'sometimes|file|image|mimes:jpg,jpeg,png|max:5120',
             'description' => 'nullable|string',
         ]);
 
-        // handle image uploads
         $paths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                if ($file) {
+                if ($file && $file->isValid()) {
                     $paths[] = $file->store('products', 'public');
                 }
             }
+            $validated['images'] = $paths;
+        } else {
+            $validated['images'] = [];
         }
-        $validated['images'] = $paths;
 
-        // stock is already array
+        if (isset($validated['stock']) && is_array($validated['stock'])) {
+            $validated['stock'] = json_encode($validated['stock']);
+        }
+
         Product::create($validated);
 
         $route = auth()->user() && auth()->user()->role === 'petugas' ? 'staff.products.index' : 'admin.products.index';
@@ -76,26 +80,31 @@ class ProductController extends Controller
             'stock.41'    => 'required|integer|min:0',
             'stock.42'    => 'required|integer|min:0',
             'stock.43'    => 'required|integer|min:0',
-            'images'      => 'nullable|array|max:5',
-            'images.*'    => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'images'      => 'sometimes|array|max:5',
+            'images.*'    => 'sometimes|file|image|mimes:jpg,jpeg,png|max:5120',
             'description' => 'nullable|string',
         ]);
 
-        // handle replacing images
         $paths = $product->images ?? [];
         if ($request->hasFile('images')) {
-            // delete old images
             foreach ($paths as $old) {
                 Storage::disk('public')->delete($old);
             }
+
             $paths = [];
             foreach ($request->file('images') as $file) {
-                if ($file) {
+                if ($file && $file->isValid()) {
                     $paths[] = $file->store('products', 'public');
                 }
             }
+            $validated['images'] = $paths;
+        } else {
+            unset($validated['images']);
         }
-        $validated['images'] = $paths;
+
+        if (isset($validated['stock']) && is_array($validated['stock'])) {
+            $validated['stock'] = json_encode($validated['stock']);
+        }
 
         $product->update($validated);
 
@@ -108,9 +117,12 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        if (is_array($product->images)) {
+            foreach ($product->images as $image) {
+                Storage::disk('public')->delete($image);
+            }
         }
+
         $product->delete();
 
         $route = auth()->user() && auth()->user()->role === 'petugas' ? 'staff.products.index' : 'admin.products.index';

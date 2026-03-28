@@ -23,7 +23,14 @@
         </a>
     </header>
 
-    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8" x-data="checkout" x-init="init()">
+    <form method="POST" action="{{ route('checkout') }}" class="flex-grow max-w-6xl mx-auto w-full px-4 py-8" x-data="checkout" x-init="init()">
+        @csrf
+        @foreach($cart as $item)
+            @if(isset($item['id']))
+                <input type="hidden" name="selected_items[]" value="{{ $item['id'] }}">
+            @endif
+        @endforeach
+
         <h2 class="text-2xl font-bold mb-6 text-red-600">Check-out</h2>
 
         <!-- Alamat pengiriman -->
@@ -99,16 +106,29 @@
         <!-- Metode pembayaran -->
         <div class="bg-white rounded-xl shadow-sm mb-8 p-6 border border-gray-100">
             <h3 class="text-lg font-bold mb-4">Metode Pembayaran</h3>
-            <div class="space-y-4">
-                <label class="flex items-center gap-4 cursor-pointer">
-                    <input type="radio" name="payment" value="qris" x-model="paymentMethod" class="form-radio text-red-600">
-                    <span class="font-semibold">QRIS</span>
+            <div class="grid gap-4 md:grid-cols-2">
+                <label class="cursor-pointer rounded-3xl border p-5 transition duration-150 ease-in-out hover:border-red-500" :class="paymentMethod === 'qris' ? 'border-red-600 bg-red-50 shadow-sm' : 'border-gray-200 bg-white'">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <div class="text-sm font-semibold">QRIS</div>
+                            <div class="text-xs text-gray-500 mt-1">Bayar melalui QRIS.</div>
+                        </div>
+                        <div class="h-5 w-5 rounded-full border transition" :class="paymentMethod === 'qris' ? 'bg-red-600 border-red-600' : 'bg-white border-gray-300'"></div>
+                    </div>
+                    <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="sr-only">
                 </label>
-                <label class="flex items-center gap-4 cursor-pointer">
-                    <input type="radio" name="payment" value="cod" x-model="paymentMethod" class="form-radio text-red-600">
-                    <span class="font-semibold">CASH ON DELIVERY</span>
+                <label class="cursor-pointer rounded-3xl border p-5 transition duration-150 ease-in-out hover:border-red-500" :class="paymentMethod === 'cod' ? 'border-red-600 bg-red-50 shadow-sm' : 'border-gray-200 bg-white'">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <div class="text-sm font-semibold">COD</div>
+                            <div class="text-xs text-gray-500 mt-1">Bayar saat barang tiba.</div>
+                        </div>
+                        <div class="h-5 w-5 rounded-full border transition" :class="paymentMethod === 'cod' ? 'bg-red-600 border-red-600' : 'bg-white border-gray-300'"></div>
+                    </div>
+                    <input type="radio" name="payment_method" value="cod" x-model="paymentMethod" class="sr-only">
                 </label>
             </div>
+
         </div>
 
         <!-- Detail pembayaran -->
@@ -124,16 +144,16 @@
         <!-- Actions -->
         <div class="flex justify-between">
             <a href="{{ route('cart') }}" class="px-6 py-3 border border-gray-300 rounded-xl font-bold hover:bg-gray-100 transition">Kembali</a>
-            <button class="px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition">Beli Sekarang</button>
+            <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition">Beli Sekarang</button>
         </div>
-    </main>
+    </form>
 
     <footer class="bg-[#1f2328] text-center p-6 mt-auto">
         <p class="text-gray-500 text-xs font-medium tracking-widest uppercase">© FAUZAN ESPE 2026.</p>
     </footer>
 
     <!-- hidden container for PHP data -->
-    <div id="cart-data" data-items='@json(session('cart', []))' class="hidden"></div>
+    <div id="cart-data" data-items='@json($cart)' class="hidden"></div>
     <div id="address-data" data-addresses='@json($addresses)' class="hidden"></div>
 
     <!-- modal untuk memilih opsi pengiriman -->
@@ -242,7 +262,7 @@
                     {id: 'ekspres', name: 'Pengiriman Ekspres', desc: 'Instant', cost: 15000},
                 ],
                 selectedShipping: 'reguler',
-                paymentMethod: 'cod',
+                paymentMethod: 'qris',
                 subtotal: 0,
                 shippingCost: 0,
                 grandTotal: 0,

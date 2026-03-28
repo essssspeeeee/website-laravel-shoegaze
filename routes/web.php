@@ -101,9 +101,12 @@ Route::middleware(['auth'])->group(function () {
         // Fitur Keranjang
         Route::get('/cart', [CartController::class, 'index'])->name('cart'); 
         Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
-        Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+        Route::patch('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+        Route::delete('/cart/remove/{id}/{size?}', [CartController::class, 'remove'])->name('cart.remove');
         // Checkout page
-        Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+        Route::match(['get', 'post'], '/checkout', [CartController::class, 'checkout'])->name('checkout');
+        Route::get('/orders/{id}', [CartController::class, 'showOrder'])->name('orders.show');
+        Route::post('/orders/{id}/upload', [CartController::class, 'uploadProof'])->name('orders.upload');
     });
 
     // 4. Fitur Umum (Bisa diakses semua role setelah login)

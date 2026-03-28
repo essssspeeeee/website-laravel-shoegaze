@@ -9,14 +9,16 @@ class Product extends Model
 {
     use HasFactory;
 
+    // Pastikan semua kolom ini ada di dalam array $fillable
     protected $fillable = [
         'name',
-        'description',
         'price',
-        'stock',      // json array: {"39":10, ...}
-        'images',     // json array of stored paths
+        'stock', // Ini yang tadi baru kita tambah
+        'description',
+        'images', // Ini untuk foto
     ];
 
+    // Beritahu Laravel kalau stock dan images itu datanya berbentuk Array/JSON
     protected $casts = [
         'stock' => 'array',
         'images' => 'array',
