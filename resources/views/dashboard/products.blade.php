@@ -61,7 +61,8 @@
                         <td class="px-5 py-3">
                             @php $total = is_array($product->stock) ? array_sum($product->stock) : $product->stock; @endphp
                             {{ $total }}
-                        </td>                        <td class="px-5 py-3">{{ $product->stock > 0 ? 'Tersedia' : 'Habis' }}</td>
+                        </td>
+                        <td class="px-5 py-3">{{ $total > 0 ? 'Tersedia' : 'Habis' }}</td>
                         <td class="px-5 py-3 space-x-2">
                             <button type="button" @click="openEdit({{ json_encode($product) }})" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-[12px]">Edit</button>
                             <button type="button" @click="promptDelete({{ $product->id }})" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[12px]">Hapus</button>

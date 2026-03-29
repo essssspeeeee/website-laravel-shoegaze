@@ -20,16 +20,21 @@
             <h1 class="text-2xl font-black text-white mb-6">Detail Pesanan</h1>
             <p class="text-sm text-slate-400 mb-6">Silakan pilih aksi berikut untuk melanjutkan proses pembelian.</p>
 
-            <form action="{{ route('cart.add', $shoe->id) }}" method="POST" class="space-y-4">
-                @csrf
-                <input type="hidden" name="size" value="{{ $selectedSize }}">
-                <input type="hidden" name="quantity" value="{{ $selectedQuantity }}">
-
-                <div class="grid gap-4 md:grid-cols-2">
-                    <button type="submit" name="action" value="add_to_cart" class="btn-secondary text-white px-5 py-4 rounded-3xl font-semibold hover:bg-slate-700 transition">Tambah ke Keranjang</button>
-                    <button type="submit" name="action" value="buy_now" class="btn-primary text-white px-5 py-4 rounded-3xl font-semibold hover:bg-red-500 transition">Beli Sekarang</button>
+            <!-- Ringkasan Pesanan -->
+            <div class="space-y-6">
+                <div>
+                    <span class="block text-slate-400 text-xs mb-1">Nama Sepatu</span>
+                    <span class="text-lg font-bold text-white">{{ $transaction->items->first()->product->name ?? '-' }}</span>
                 </div>
-            </form>
+                <div>
+                    <span class="block text-slate-400 text-xs mb-1">Total Harga</span>
+                    <span class="text-lg font-bold text-white">Rp {{ number_format($transaction->total_price) }}</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400 text-xs mb-1">Status Pembayaran</span>
+                    <span class="text-lg font-bold text-white">{{ ucfirst($transaction->payment_status ?? '-') }}</span>
+                </div>
+            </div>
         </div>
     </div>
 

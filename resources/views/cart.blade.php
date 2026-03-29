@@ -18,10 +18,41 @@
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
-    <header class="bg-white shadow-sm py-4 px-8 flex justify-between items-center">
-        <a href="{{ route('home') }}" class="hover:opacity-80 transition-opacity">
-            <h1 class="text-2xl font-black italic tracking-wider">SHOEGAZE</h1>
-        </a>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="{{ route('home') }}" class="hover:opacity-80 transition-opacity">
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-950 tracking-tight">SHOEGAZE</h1>
+            </a>
+
+            <!-- Search & Icons -->
+            <div class="flex items-center gap-4 md:gap-6">
+                <!-- Search Input -->
+                <div class="hidden sm:flex items-center bg-slate-100 rounded-full px-4 py-2">
+                    <input 
+                        type="text" 
+                        placeholder="Mau cari apa?" 
+                        class="bg-transparent text-sm outline-none w-40 md:w-48 text-slate-900 placeholder-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600 ml-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <!-- Shopping Cart Icon -->
+                <a href="{{ route('cart') }}" class="text-slate-600 hover:text-slate-950 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </a>
+
+                <!-- Profile Icon -->
+                <a href="{{ route('profile') }}" class="text-slate-600 hover:text-slate-950 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" />
+                    </svg>
+                </a>
+            </div>
+        </div>
     </header>
 
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8" 
@@ -136,8 +167,8 @@
         </form>
     </main>
 
-    <footer class="bg-[#1f2328] text-center p-6 mt-auto">
-        <p class="text-gray-500 text-xs font-medium tracking-widest uppercase">© FAUZAN ESPE 2026.</p>
+    <footer class="w-full bg-zinc-900 flex items-center justify-center py-6 mt-auto">
+        <span class="text-zinc-400 text-xs font-sans">© FAUZAAN ESPE 2026. Seluruh hak dilindungi undang-undang.</span>
     </footer>
 
     <div id="cart-data" data-items='@json(session('cart', []))' class="hidden"></div>
