@@ -16,6 +16,7 @@ class Product extends Model
         'stock', // Ini yang tadi baru kita tambah
         'description',
         'images', // Ini untuk foto
+        'status',
     ];
 
     // Beritahu Laravel kalau stock dan images itu datanya berbentuk Array/JSON

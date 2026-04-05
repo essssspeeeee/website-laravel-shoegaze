@@ -14,7 +14,7 @@
 
     <header class="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
         <h2 class="text-xl font-bold text-gray-800">Kelola User</h2>
-        <button @click="showAddModal = true" class="bg-[#2d4a99] hover:bg-[#3d5bb0] text-white px-4 py-2 rounded">+ Tambah User</button>
+        <button @click="openAdd()" class="bg-[#2d4a99] hover:bg-[#3d5bb0] text-white px-4 py-2 rounded">+ Tambah User</button>
     </header>
 
     <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4 flex flex-col md:flex-row md:items-center gap-2">
@@ -78,12 +78,9 @@
     <div x-show="showAddModal || showEditModal" x-cloak class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div @click.away="cancel()" class="bg-white w-full max-w-lg p-6 rounded-lg relative">
             <h3 class="text-lg font-bold mb-4" x-text="showEditModal ? 'Edit User' : 'Tambah User'"></h3>
-            <form :action="showEditModal ? '/admin/users/' + editUser.id : '{{ route('admin.users.store') }}'"
-                  method="POST">
+            <form id="userForm" method="POST">
                 @csrf
-                <template x-if="showEditModal">
-                    <input type="hidden" name="_method" value="PATCH">
-                </template>
+                <input type="hidden" name="_method" id="formMethod" value="POST">
 
                 <div class="mb-3">
                     <label class="block text-sm font-medium">Nama</label>
@@ -114,6 +111,7 @@
                         <option value="Aktif">Aktif</option>
                         <option value="Nonaktif">Nonaktif</option>
                     </select>
+                    @error('status')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="mb-3" x-show="!showEditModal">
                     <label class="block text-sm font-medium">Password</label>
@@ -193,10 +191,19 @@ function userManager() {
         editUser: {},
         selected: {},
         form: { name:'', email:'', role:'user', phone:'', status:'Aktif', resetPassword:false },
+        openAdd() {
+            this.showAddModal = true;
+            // Set form for create
+            document.getElementById('userForm').action = '{{ route("admin.users.store") }}';
+            document.getElementById('formMethod').value = 'POST';
+        },
         openEdit(user) {
             this.editUser = user;
             this.form = { name:user.name, email:user.email, role:user.role, phone:user.phone, status:user.status, resetPassword:false };
             this.showEditModal = true;
+            // Set form for edit
+            document.getElementById('userForm').action = '/admin/users/' + user.id;
+            document.getElementById('formMethod').value = 'PATCH';
         },
         openDetail(user) {
             this.selected = user;
@@ -205,6 +212,9 @@ function userManager() {
         cancel() {
             this.showAddModal = this.showEditModal = false;
             this.form = { name:'', email:'', role:'user', phone:'', status:'Aktif', resetPassword:false };
+            // Reset form to create mode
+            document.getElementById('userForm').action = '{{ route("admin.users.store") }}';
+            document.getElementById('formMethod').value = 'POST';
         },
         closeDetail() {
             this.showDetailModal = false;

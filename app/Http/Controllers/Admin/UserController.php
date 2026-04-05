@@ -37,6 +37,12 @@ class UserController extends Controller
         return view('dashboard.users', compact('users','roles'));
     }
 
+    public function create()
+    {
+        // Not used since create is in modal, but required for resource route
+        abort(404);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -56,8 +62,29 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
+    public function edit(User $user)
+    {
+        // Not used since edit is in modal, but required for resource route
+        abort(404);
+    }
+
     public function update(Request $request, User $user)
     {
+        // Debug: log request data
+        \Log::info('User update request', [
+            'user_id' => $user->id,
+            'request_method' => $request->method(),
+            'request_data' => $request->all(),
+            'headers' => $request->headers->all(),
+        ]);
+
+        // Validasi hanya admin yang bisa update
+        \Log::info('User role check', ['user_role' => auth()->user()->role ?? 'null']);
+        if (auth()->user()->role !== 'admin') {
+            \Log::warning('Non-admin trying to update user', ['user_id' => auth()->id(), 'target_user_id' => $user->id]);
+            abort(403, 'Hanya admin yang bisa mengubah data user.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id,

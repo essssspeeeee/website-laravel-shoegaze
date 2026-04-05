@@ -62,7 +62,7 @@
                             @php $total = is_array($product->stock) ? array_sum($product->stock) : $product->stock; @endphp
                             {{ $total }}
                         </td>
-                        <td class="px-5 py-3">{{ $total > 0 ? 'Tersedia' : 'Habis' }}</td>
+                        <td class="px-5 py-3">{{ $product->status }}</td>
                         <td class="px-5 py-3 space-x-2">
                             <button type="button" @click="openEdit({{ json_encode($product) }})" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-[12px]">Edit</button>
                             <button type="button" @click="promptDelete({{ $product->id }})" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[12px]">Hapus</button>
@@ -155,8 +155,35 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Upload Gambar Produk (max 5)</label>
-                            <input type="file" name="images[]" accept="image/*" multiple class="w-full" />
-                            <small class="text-gray-500">Pilih hingga 5 file JPG/PNG, masing-masing maksimal 5MB.</small>
+                            <!-- Current Images Preview -->
+                            <template x-if="showEditModal && editProduct.images && editProduct.images.length > 0">
+                                <div class="mb-2">
+                                    <p class="text-sm text-gray-600">Foto yang sudah ada:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="(image, index) in editProduct.images" :key="index">
+                                            <div class="relative">
+                                                <img :src="'/storage/' + image" alt="Current image" class="w-16 h-16 object-cover rounded border">
+                                                <button type="button" @click="removeImage(index)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <!-- New Images Preview -->
+                            <div x-show="selectedFiles.length > 0" class="mb-2">
+                                <p class="text-sm text-gray-600">Foto yang akan diunggah:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="(file, index) in selectedFiles" :key="index">
+                                        <div class="relative">
+                                            <img :src="file.url" alt="New image" class="w-16 h-16 object-cover rounded border">
+                                            <button type="button" @click="removeNewImage(index)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <input type="file" id="imageInput" name="images[]" accept="image/*" multiple @change="handleFileSelect" class="w-full" />
+                            <input type="hidden" name="removed_images" x-model="removedImagesJson">
+                            <small class="text-gray-500">Pilih hingga 5 file JPG/PNG, masing-masing maksimal 2MB. Total foto tidak boleh lebih dari 5.</small>
                             @error('images')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             @error('images.*')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
@@ -216,18 +243,60 @@ function productManager(prefix) {
         deleteId: null,
         editProduct: {},
         form: { name: '', price: '', stock: { '39':0,'40':0,'41':0,'42':0,'43':0 }, description: '' },
+        selectedFiles: [],
+        removedImages: [],
+        get removedImagesJson() {
+            return JSON.stringify(this.removedImages);
+        },
         openEdit(product) {
-            this.editProduct = product;
+            this.editProduct = JSON.parse(JSON.stringify(product));
             this.form.name = product.name;
             this.form.price = product.price;
             // ensure stock object has all sizes
             this.form.stock = Object.assign({ '39':0,'40':0,'41':0,'42':0,'43':0 }, product.stock || {});
             this.form.description = product.description || '';
+            this.selectedFiles = [];
+            this.removedImages = [];
             this.showEditModal = true;
         },
         cancel() {
             this.showAddModal = this.showEditModal = false;
             this.form = { name: '', price: '', stock: { '39':0,'40':0,'41':0,'42':0,'43':0 }, description: '' };
+            this.selectedFiles = [];
+            this.removedImages = [];
+        },
+        handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            const maxTotal = 5;
+            const currentCount = (this.editProduct.images ? this.editProduct.images.length : 0) - this.removedImages.length;
+            const availableSlots = maxTotal - currentCount;
+            const toAdd = files.slice(0, availableSlots);
+            // Clear previous selectedFiles
+            this.selectedFiles.forEach(item => URL.revokeObjectURL(item.url));
+            this.selectedFiles = [];
+            toAdd.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const url = URL.createObjectURL(file);
+                    this.selectedFiles.push({ file, url });
+                }
+            });
+            // Update input files to match selectedFiles
+            this.updateFileInput();
+        },
+        removeImage(index) {
+            this.removedImages.push(this.editProduct.images[index]);
+            this.editProduct.images.splice(index, 1);
+        },
+        removeNewImage(index) {
+            URL.revokeObjectURL(this.selectedFiles[index].url);
+            this.selectedFiles.splice(index, 1);
+            this.updateFileInput();
+        },
+        updateFileInput() {
+            const input = document.getElementById('imageInput');
+            const dt = new DataTransfer();
+            this.selectedFiles.forEach(item => dt.items.add(item.file));
+            input.files = dt.files;
         },
         promptDelete(id) {
             this.deleteId = id;

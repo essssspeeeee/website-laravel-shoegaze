@@ -100,20 +100,30 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:user'])->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         
-        // Fitur Keranjang
-        Route::get('/cart', [CartController::class, 'index'])->name('cart'); 
-        Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
-        Route::patch('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
-        Route::delete('/cart/remove/{id}/{size?}', [CartController::class, 'remove'])->name('cart.remove');
+        // Order history user
+        Route::get('/orders', [\App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+
         // Checkout page
-        Route::match(['get', 'post'], '/checkout', [CartController::class, 'checkout'])->name('checkout');
+        // Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+        // Route::post('/orders', [CartController::class, 'checkout'])->name('order.store');
+        // Route::post('/checkout/address', [CartController::class, 'saveAddress'])->name('checkout.address.store');
         Route::get('/orders/{id}', [CartController::class, 'showOrder'])->name('orders.show');
         Route::post('/orders/{id}/upload', [CartController::class, 'uploadProof'])->name('orders.upload');
     });
 
-    // 4. Fitur Umum (Bisa diakses semua role setelah login)
+    // Fitur Keranjang (untuk semua role yang sudah login - di luar user role group)
+    Route::get('/cart', [CartController::class, 'index'])->name('cart'); 
+    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
+    Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{id}/{size?}', [CartController::class, 'remove'])->name('cart.remove');
+
+    // Checkout (untuk semua role yang sudah login)
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::post('/orders', [CartController::class, 'checkout'])->name('order.store');
+    Route::post('/checkout/address', [CartController::class, 'saveAddress'])->name('checkout.address.store');
     
-    // Route Kelola Akun (Profile) - Ini yang tadi bikin error
+    // Route Kelola Akun (Profile)
     Route::get('/dashboard/profile', function () {
         return view('dashboard.profile');
     })->name('profile');
@@ -124,10 +134,15 @@ Route::middleware(['auth'])->group(function () {
     // Detail Produk
     Route::get('/product/detail/{id}', function ($id) {
         $product = Product::findOrFail($id);
+        // Ensure stock is decoded to array, handle if null or invalid JSON
+        $product->stock = is_string($product->stock) ? json_decode($product->stock, true) : ($product->stock ?? []);
+        if (!is_array($product->stock)) {
+            $product->stock = [];
+        }
         return view('dashboard.product_detail', compact('product'));
     })->name('product.detail');
 
-});
+}); // Tutup auth middleware group
 
 // Redirect jika akses /dashboard langsung
 Route::get('/dashboard', [HomeController::class, 'index']);

@@ -17,6 +17,14 @@ class Transaction extends Model
         'payment_method',
         'proof_image',
         'status',
+        'shipping_method',
+        'shipping_cost',
+        'selected_address_name',
+        'selected_address_phone',
+        'selected_address_jalan',
+        'recipient_name',
+        'phone_number',
+        'full_address',
     ];
 
     public function user()

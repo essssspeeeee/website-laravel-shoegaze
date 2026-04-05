@@ -7,9 +7,10 @@ class SearchController extends Controller
 {
     public function index(Request $request)
     {
-        $query = $request->input('query');
+        // Handle both 'query' and 'q' parameters
+        $query = $request->input('query') ?? $request->input('q');
         
-        // Logika mencari produk berdasarkan nama atau deskripsi
+        // Logika mencari produk berdasarkan nama atau deskripsi dengan LIKE
         $products = Product::where('name', 'LIKE', "%{$query}%")
                             ->orWhere('description', 'LIKE', "%{$query}%")
                             ->get();

@@ -40,7 +40,7 @@ class ProductController extends Controller
             'stock.42'    => 'required|integer|min:0',
             'stock.43'    => 'required|integer|min:0',
             'images'      => 'sometimes|array|max:5',
-            'images.*'    => 'sometimes|file|image|mimes:jpg,jpeg,png|max:5120',
+            'images.*'    => 'sometimes|file|image|mimes:jpeg,png,jpg|max:2048',
             'description' => 'nullable|string',
         ]);
 
@@ -56,9 +56,17 @@ class ProductController extends Controller
             $validated['images'] = [];
         }
 
-        if (isset($validated['stock']) && is_array($validated['stock'])) {
-            $validated['stock'] = json_encode($validated['stock']);
+        // Ensure each size has a valid integer value and compile as JSON
+        $stockData = [];
+        foreach (['39', '40', '41', '42', '43'] as $size) {
+            $value = isset($validated['stock'][$size]) ? $validated['stock'][$size] : 0;
+            $stockData[$size] = is_numeric($value) ? max(0, intval($value)) : 0;
         }
+        $validated['stock'] = json_encode($stockData);
+
+        // Set status based on total stock
+        $totalStock = array_sum($stockData);
+        $validated['status'] = $totalStock > 0 ? 'Tersedia' : 'Habis';
 
         Product::create($validated);
 
@@ -81,30 +89,60 @@ class ProductController extends Controller
             'stock.42'    => 'required|integer|min:0',
             'stock.43'    => 'required|integer|min:0',
             'images'      => 'sometimes|array|max:5',
-            'images.*'    => 'sometimes|file|image|mimes:jpg,jpeg,png|max:5120',
+            'images.*'    => 'sometimes|file|image|mimes:jpeg,png,jpg|max:2048',
+            'removed_images' => 'sometimes|json',
             'description' => 'nullable|string',
         ]);
 
-        $paths = $product->images ?? [];
-        if ($request->hasFile('images')) {
-            foreach ($paths as $old) {
-                Storage::disk('public')->delete($old);
-            }
+        $currentImages = $product->images ?? [];
 
-            $paths = [];
-            foreach ($request->file('images') as $file) {
-                if ($file && $file->isValid()) {
-                    $paths[] = $file->store('products', 'public');
+        // Handle removed images
+        if ($request->filled('removed_images')) {
+            $removed = json_decode($request->input('removed_images'), true);
+            if (is_array($removed)) {
+                foreach ($removed as $removePath) {
+                    if (in_array($removePath, $currentImages)) {
+                        Storage::disk('public')->delete($removePath);
+                        $currentImages = array_diff($currentImages, [$removePath]);
+                    }
                 }
             }
-            $validated['images'] = $paths;
-        } else {
-            unset($validated['images']);
         }
 
-        if (isset($validated['stock']) && is_array($validated['stock'])) {
-            $validated['stock'] = json_encode($validated['stock']);
+        // Handle new images
+        $newPaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                if ($file && $file->isValid()) {
+                    $newPaths[] = $file->store('products', 'public');
+                }
+            }
         }
+        $currentImages = array_merge($currentImages, $newPaths);
+
+        // Ensure max 5 images
+        if (count($currentImages) > 5) {
+            // If more than 5, keep only first 5
+            $toDelete = array_slice($currentImages, 5);
+            foreach ($toDelete as $del) {
+                Storage::disk('public')->delete($del);
+            }
+            $currentImages = array_slice($currentImages, 0, 5);
+        }
+
+        $validated['images'] = $currentImages;
+
+        // Ensure each size has a valid integer value and compile as JSON
+        $stockData = [];
+        foreach (['39', '40', '41', '42', '43'] as $size) {
+            $value = isset($validated['stock'][$size]) ? $validated['stock'][$size] : 0;
+            $stockData[$size] = is_numeric($value) ? max(0, intval($value)) : 0;
+        }
+        $validated['stock'] = json_encode($stockData);
+
+        // Set status based on total stock
+        $totalStock = array_sum($stockData);
+        $validated['status'] = $totalStock > 0 ? 'Tersedia' : 'Habis';
 
         $product->update($validated);
 

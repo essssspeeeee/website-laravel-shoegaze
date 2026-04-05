@@ -1,92 +1,8 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shoegaze - Dashboard User</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
-        [x-cloak] { display: none !important; }
-    </style>
-</head>
-<body class="antialiased text-gray-900">
+﻿@extends('layouts.app')
 
-<header class="bg-white border-b border-slate-100 sticky top-0 z-[100] py-4">
-    <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        
-        <div class="flex-shrink-0">
-            <a href="/dashboard" class="text-2xl font-black tracking-tighter text-slate-950 uppercase">
-                SHOEGAZE
-            </a>
-        </div>
+@section('title', 'Shoegaze - Dashboard User')
 
-        <div class="flex items-center gap-6">
-            
-            <form action="/search" method="GET" class="relative hidden md:block mb-0">
-                <input type="text" 
-                    name="q"
-                    value="{{ request('q') }}"
-                    class="w-64 lg:w-80 bg-slate-100/80 border-none rounded-full py-2 px-5 text-sm focus:ring-2 focus:ring-slate-200 transition-all" 
-                    placeholder="Mau cari apa?">
-                <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
-            </form>
-
-            <a href="/cart" class="text-slate-700 hover:text-red-500 transition-colors relative">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full border-2 border-white">2</span>
-            </a>
-
-            <div class="relative" x-data="{ open: false }" @click.away="open = false">
-                <button @click="open = !open" class="text-slate-700 hover:text-red-500 transition-colors focus:outline-none flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                </button>
-
-                <div x-show="open" 
-                    x-transition:enter="transition ease-out duration-100"
-                    x-transition:enter-start="transform opacity-0 scale-95"
-                    x-transition:enter-end="transform opacity-100 scale-100"
-                    style="display: none;"
-                    class="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-[110]">
-                    
-                    <div class="px-4 py-2 border-b border-slate-50 mb-1">
-                        <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold italic">Akun Saya</p>
-                        <p class="text-sm font-black text-slate-900 truncate capitalize">{{ Auth::user()->name }}</p>
-                    </div>
-
-                    <a href="/dashboard/profile" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium">
-                        Edit Profil
-                    </a>
-                    
-                    <a href="/history" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium">
-                        Pesanan Saya
-                    </a>
-
-                    <hr class="my-1 border-slate-50">
-
-                    <form method="POST" action="{{ route('logout') }}" class="mb-0">
-                        @csrf
-                        <button type="submit" class="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-500 font-bold hover:bg-red-50 transition-colors">
-                            Keluar Akun
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</header>
-
+@section('content')
     <main class="max-w-7xl mx-auto px-6 md:px-12 py-8">
         
         <div class="mb-14 relative rounded-xl overflow-hidden shadow-sm border border-gray-100">
@@ -120,16 +36,8 @@
                     <h3 class="font-bold text-[11px] uppercase mb-1 h-8 line-clamp-2">{{ $product->name }}</h3>
                 </a>
                 
-                <div class="flex items-center justify-between mt-4">
+                <div class="mt-4">
                     <span class="text-[#00a651] font-bold text-sm italic">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
-                    
-                    <button 
-                        onclick="addToCart('{{ $product->id }}', '{{ $product->name }}')"
-                        class="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors shadow-sm group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 group-hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </button>
                 </div>
             </div>
             @endforeach
@@ -198,43 +106,4 @@
         </div>
     </div>
 
-    <footer class="bg-[#2b2d2f] text-gray-400 py-8 text-center mt-10">
-        <p class="text-[10px] tracking-[0.2em] uppercase opacity-70">&copy; © FAUZAN ESPE 2026. Seluruh hak dilindungi undang-undang</p>
-    </footer>
-
-    <script>
-        function addToCart(productId, productName) {
-            fetch(`/cart/add/${productId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            }).then(response => {
-                if(response.ok) {
-                    return response.json();
-                }
-                throw new Error('Gagal menambahkan ke keranjang');
-            }).then(data => {
-                // update badge
-                const badge = document.getElementById('cart-badge');
-                if (badge) {
-                    if (data.count && data.count > 0) {
-                        badge.textContent = data.count;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-
-                window.dispatchEvent(new CustomEvent('add-to-cart', { 
-                    detail: { product: productName } 
-                }));
-            }).catch(error => {
-                console.error('Error:', error);
-                alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
-            });
-        }
-    </script>
-</body>
-</html>
+@endsection

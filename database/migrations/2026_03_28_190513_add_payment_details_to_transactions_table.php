@@ -12,9 +12,15 @@ return new class extends Migration
    public function up(): void
 {
     Schema::table('transactions', function (Blueprint $table) {
-        $table->string('payment_method')->default('qris'); 
-        $table->string('payment_proof')->nullable(); 
-        $table->string('status')->default('pending');
+        if (! Schema::hasColumn('transactions', 'payment_method')) {
+            $table->string('payment_method')->default('qris'); 
+        }
+        if (! Schema::hasColumn('transactions', 'payment_proof')) {
+            $table->string('payment_proof')->nullable(); 
+        }
+        if (! Schema::hasColumn('transactions', 'status')) {
+            $table->string('status')->default('pending');
+        }
     });
 }
 
