@@ -228,6 +228,11 @@
 
             <form method="POST" action="{{ route('order.store') }}" class="space-y-6">
                 @csrf
+                @if(request('product_id'))
+                    <input type="hidden" name="product_id" value="{{ request('product_id') }}">
+                    <input type="hidden" name="quantity" value="{{ request('quantity', 1) }}">
+                    <input type="hidden" name="size" value="{{ request('size') }}">
+                @endif
                 @foreach(request('selected_items', []) as $selectedId)
                     <input type="hidden" name="selected_items[]" value="{{ $selectedId }}">
                 @endforeach

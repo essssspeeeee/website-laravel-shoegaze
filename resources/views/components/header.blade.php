@@ -52,8 +52,8 @@
                         Edit Profil
                     </a>
                     
-                    <a href="/history" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium">
-                        Pesanan Saya
+                    <a href="{{ route('orders.index') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium">
+                        Riwayat Pesanan
                     </a>
 
                     <hr class="my-1 border-slate-50">

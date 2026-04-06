@@ -14,6 +14,15 @@
         </div>
     </div>
 @endif
+
+{{-- TAMBAHKAN INI DI BAWAHNYA --}}
+@if(session('error'))
+    <div class="max-w-8xl mx-auto px-6 md:px-16 py-4">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {{ session('error') }}
+        </div>
+    </div>
+@endif
 <div class="min-h-screen flex flex-col">
     <main class="max-w-8xl mx-auto px-6 md:px-16 py-10 flex-grow">
         <h2 class="text-3xl font-bold mb-10">Detail Produk</h2>
@@ -48,7 +57,7 @@
                         <p>{{ $product->description ?? 'Deskripsi produk tidak tersedia.' }}</p>
                     </div>
 
-                    <form id="product_form" action="{{ route('cart.add', $product->id) }}" method="POST" class="space-y-8">
+                    <form id="product_form" method="POST" action="{{ route('cart.add', $product->id) }}" class="space-y-8">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <input type="hidden" name="size" id="selected_size" value="">
@@ -336,34 +345,65 @@
             // Action set via button name/value
         });
 
-        addCartButton.addEventListener('click', function () {
-            // Action set via button name/value - form will submit normally
+        addCartButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (addCartButton.disabled) return;
+
+            const formData = new FormData(form);
+            formData.append('action', 'cart');
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    // Trigger the success notification
+                    window.dispatchEvent(new CustomEvent('add-to-cart', { detail: { product: data.message } }));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menambahkan ke keranjang.');
+            });
         });
 
-        form.addEventListener('submit', function (event) {
-            if (!selectedSize) {
-                alert('Silakan pilih ukuran terlebih dahulu!');
-                // Allow submit with empty size to reach controller validation
-            }
+        // Cari bagian ini di bagian bawah file detail.blade.php Anda
+form.addEventListener('submit', function (event) {
+    // 1. CEK: Apakah ini klik tombol 'Beli Sekarang' atau 'Tambah Keranjang'?
+    // event.submitter adalah tombol yang baru saja Anda klik
+    const actionType = event.submitter.getAttribute('value');
 
-            if (selectedSize && !['39','40','41','42','43'].includes(selectedSize)) {
-                event.preventDefault();
-                alert('Ukuran tidak valid. Silakan pilih ukuran yang tersedia.');
-                return;
-            }
+    // --- DI SINI LETAK KODENYA ---
+    if (actionType === 'buy_now') {
+        // Jika klik Beli Sekarang, redirect ke GET checkout.direct dengan query params
+        event.preventDefault();
+        const productId = "{{ $product->id }}";
+        const size = selectedSize;
+        const quantity = qty;
+        window.location.href = "{{ route('checkout.direct') }}?product_id=" + productId + "&size=" + size + "&quantity=" + quantity;
+        return;
+    } else {
+        // Jika klik Tambah Keranjang, form akan dikirim ke route cart.add (seperti biasa)
+        form.action = "{{ route('cart.add', $product->id) }}";
+    }
+    // ----------------------------
 
-            if (selectedSize && qty > selectedStock) {
-                event.preventDefault();
-                alert('Kuantitas melebihi stok tersedia. Stok tersedia: ' + selectedStock);
-                return;
-            }
+    // Kode validasi di bawah ini jangan dihapus, biarkan saja
+    if (!selectedSize) {
+        alert('Silakan pilih ukuran terlebih dahulu!');
+        event.preventDefault();
+        return;
+    }
 
-            selectedSizeInput.value = selectedSize;
-            updateQuantity();
-
-            // Biarkan tombol Tambah ke Keranjang submit normal.
-            // Tombol Beli Sekarang juga akan submit normal ke checkout.
-        });
+    selectedSizeInput.value = selectedSize;
+    updateQuantity();
+});
 
         updateButtons();
         updateQuantity();

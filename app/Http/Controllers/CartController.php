@@ -75,27 +75,109 @@ class CartController extends Controller
     // Fungsi untuk menampilkan halaman checkout
     public function checkout(Request $request)
     {
-        $selectedItems = $request->input('selected_items', $request->query('selected_items', []));
-        if (!is_array($selectedItems)) {
-            $selectedItems = [$selectedItems];
-        }
-
-        $selectedIds = array_values(array_filter(array_map('intval', $selectedItems), function ($id) {
-            return $id > 0;
-        }));
-
-        if (!$request->has('product_id') && empty($selectedIds)) {
-            return redirect()->route('cart')->with('error', 'Pilih minimal satu produk terlebih dahulu sebelum checkout.');
-        }
+        $isDirectPurchase = $request->query('product_id') !== null || $request->input('product_id') !== null;
 
         try {
-        if ($request->isMethod('post')) {
-            if ($request->has('product_id')) {
-                // Direct purchase
+            if ($request->isMethod('post')) {
+                if ($isDirectPurchase) {
+                    Log::info('Direct purchase initiated', [
+                        'product_id' => $request->post('product_id'),
+                        'quantity' => $request->post('quantity'),
+                        'size' => $request->post('size'),
+                        'user_id' => auth()->id(),
+                    ]);
+
+                    $validated = $request->validate([
+                        'product_id' => 'required|integer|exists:products,id',
+                        'quantity' => 'required|integer|min:1',
+                        'size' => 'required|string|in:39,40,41,42,43',
+                        'payment_method' => 'nullable|string|in:qris,cod',
+                        'shipping_method' => 'nullable|string|in:reguler,standar,ekspres',
+                        'shipping_cost' => 'nullable|numeric|min:0',
+                        'selected_address_name' => 'required|string|max:255',
+                        'selected_address_phone' => 'required|string|max:20',
+                        'selected_address_jalan' => 'required|string|max:500',
+                    ]);
+
+                    $product = Product::findOrFail($validated['product_id']);
+                    $paymentMethod = $validated['payment_method'] ?? 'qris';
+                    $shippingMethod = $validated['shipping_method'] ?? 'reguler';
+                    $shippingCost = $validated['shipping_cost'] ?? 8000;
+                    $status = $paymentMethod === 'cod' ? 'diproses' : 'pending';
+
+                    $stockArray = is_string($product->stock) ? json_decode($product->stock, true) : ($product->stock ?? []);
+                    $stockArray = is_array($stockArray) ? $stockArray : [];
+                    $stock = (int) ($stockArray[$validated['size']] ?? 0);
+
+                    Log::info('Stock check for direct purchase POST', [
+                        'product_id' => $validated['product_id'],
+                        'size' => $validated['size'],
+                        'quantity' => $validated['quantity'],
+                        'stock_raw' => $product->stock,
+                        'stock_decoded' => $stockArray,
+                        'available_stock' => $stock,
+                    ]);
+
+                    if ($stock < $validated['quantity']) {
+                        return redirect()->back()->with('error', 'Stok produk ' . $product->name . ' ukuran ' . $validated['size'] . ' tidak tersedia atau tidak mencukupi. Stok tersedia: ' . $stock);
+                    }
+
+                    $total = $product->price * $validated['quantity'] + $shippingCost;
+
+                    $transactionData = [
+                        'user_id' => auth()->id(),
+                        'total' => $total,
+                        'method' => $paymentMethod,
+                        'status' => $status,
+                        'shipping_method' => $shippingMethod,
+                        'shipping_cost' => $shippingCost,
+                    ];
+
+                    if (Schema::hasColumn('transactions', 'payment_method')) {
+                        $transactionData['payment_method'] = $paymentMethod;
+                    }
+                    if (Schema::hasColumn('transactions', 'shipping_method')) {
+                        $transactionData['shipping_method'] = $shippingMethod;
+                    }
+                    if (Schema::hasColumn('transactions', 'shipping_cost')) {
+                        $transactionData['shipping_cost'] = $shippingCost;
+                    }
+                    if (Schema::hasColumn('transactions', 'selected_address_name')) {
+                        $transactionData['selected_address_name'] = $validated['selected_address_name'];
+                    }
+                    if (Schema::hasColumn('transactions', 'selected_address_phone')) {
+                        $transactionData['selected_address_phone'] = $validated['selected_address_phone'];
+                    }
+                    if (Schema::hasColumn('transactions', 'selected_address_jalan')) {
+                        $transactionData['selected_address_jalan'] = $validated['selected_address_jalan'];
+                    }
+                    if (Schema::hasColumn('transactions', 'recipient_name')) {
+                        $transactionData['recipient_name'] = $validated['selected_address_name'];
+                    }
+                    if (Schema::hasColumn('transactions', 'phone_number')) {
+                        $transactionData['phone_number'] = $validated['selected_address_phone'];
+                    }
+                    if (Schema::hasColumn('transactions', 'full_address')) {
+                        $transactionData['full_address'] = $validated['selected_address_jalan'];
+                    }
+
+                    $transaction = Transaction::create($transactionData);
+
+                    $transaction->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $validated['quantity'],
+                        'price' => $product->price,
+                    ]);
+
+                    $stockArray[$validated['size']] -= $validated['quantity'];
+                    $product->stock = $stockArray;
+                    $product->save();
+
+                    return redirect()->route('orders.show', $transaction->id)
+                                     ->with('success', 'Transaksi berhasil dibuat. ' . ($paymentMethod === 'qris' ? 'Silakan upload bukti transfer setelah pesanan dibuat.' : ''));
+                }
+
                 $validated = $request->validate([
-                    'product_id' => 'required|integer|exists:products,id',
-                    'quantity' => 'required|integer|min:1',
-                    'size' => 'required|string|in:39,40,41,42,43',
                     'payment_method' => 'nullable|string|in:qris,cod',
                     'shipping_method' => 'nullable|string|in:reguler,standar,ekspres',
                     'shipping_cost' => 'nullable|numeric|min:0',
@@ -104,99 +186,22 @@ class CartController extends Controller
                     'selected_address_jalan' => 'required|string|max:500',
                 ]);
 
-                $product = Product::findOrFail($validated['product_id']);
                 $paymentMethod = $validated['payment_method'] ?? 'qris';
                 $shippingMethod = $validated['shipping_method'] ?? 'reguler';
                 $shippingCost = $validated['shipping_cost'] ?? 8000;
                 $status = $paymentMethod === 'cod' ? 'diproses' : 'pending';
 
-                // Check stock
-                $stockArray = $product->stock ?? [];
-                if (!isset($stockArray[$validated['size']])) {
-                    return redirect()->back()->with('error', 'Stok produk ' . $product->name . ' ukuran ' . $validated['size'] . ' tidak tersedia.');
+                $selectedItems = $request->input('selected_items', $request->query('selected_items', []));
+                if (!is_array($selectedItems)) {
+                    $selectedItems = [$selectedItems];
                 }
-                $stock = $stockArray[$validated['size']];
-                if ($stock < $validated['quantity']) {
-                    return redirect()->back()->with('error', 'Stok untuk ' . $product->name . ' ukuran ' . $validated['size'] . ' tidak mencukupi. Stok tersedia: ' . $stock);
+                $selectedIds = array_values(array_filter(array_map('intval', $selectedItems), function ($id) {
+                    return $id > 0;
+                }));
+
+                if (empty($selectedIds)) {
+                    return redirect()->route('cart')->with('error', 'Pilih minimal satu produk terlebih dahulu sebelum checkout.');
                 }
-
-                $total = $product->price * $validated['quantity'] + $shippingCost;
-
-                $transactionData = [
-                    'user_id' => auth()->id(),
-                    'total' => $total,
-                    'method' => $paymentMethod,
-                    'status' => $status,
-                    'shipping_method' => $shippingMethod,
-                    'shipping_cost' => $shippingCost,
-                ];
-
-                if (Schema::hasColumn('transactions', 'payment_method')) {
-                    $transactionData['payment_method'] = $paymentMethod;
-                }
-
-                if (Schema::hasColumn('transactions', 'shipping_method')) {
-                    $transactionData['shipping_method'] = $shippingMethod;
-                }
-
-                if (Schema::hasColumn('transactions', 'shipping_cost')) {
-                    $transactionData['shipping_cost'] = $shippingCost;
-                }
-
-                if (Schema::hasColumn('transactions', 'selected_address_name')) {
-                    $transactionData['selected_address_name'] = $validated['selected_address_name'];
-                }
-
-                if (Schema::hasColumn('transactions', 'selected_address_phone')) {
-                    $transactionData['selected_address_phone'] = $validated['selected_address_phone'];
-                }
-
-                if (Schema::hasColumn('transactions', 'selected_address_jalan')) {
-                    $transactionData['selected_address_jalan'] = $validated['selected_address_jalan'];
-                }
-
-                if (Schema::hasColumn('transactions', 'recipient_name')) {
-                    $transactionData['recipient_name'] = $validated['selected_address_name'];
-                }
-                if (Schema::hasColumn('transactions', 'phone_number')) {
-                    $transactionData['phone_number'] = $validated['selected_address_phone'];
-                }
-                if (Schema::hasColumn('transactions', 'full_address')) {
-                    $transactionData['full_address'] = $validated['selected_address_jalan'];
-                }
-
-                $transaction = Transaction::create($transactionData);
-
-                $transaction->items()->create([
-                    'product_id' => $product->id,
-                    'quantity' => $validated['quantity'],
-                    'price' => $product->price,
-                ]);
-
-                // Reduce stock
-                $stockArray[$validated['size']] -= $validated['quantity'];
-                $product->stock = $stockArray;
-                $product->save();
-
-                // Do not delete cart items or update session cart for direct purchase
-
-                return redirect()->route('orders.show', $transaction->id)
-                                 ->with('success', 'Transaksi berhasil dibuat. ' . ($paymentMethod === 'qris' ? 'Silakan upload bukti transfer setelah pesanan dibuat.' : ''));
-            } else {
-                // Cart checkout
-                $validated = $request->validate([
-                    'payment_method' => 'nullable|string|in:qris,cod',
-                    'shipping_method' => 'nullable|string|in:reguler,standar,ekspres',
-                    'shipping_cost' => 'nullable|numeric|min:0',
-                    'selected_address_name' => 'required|string|max:255',
-                    'selected_address_phone' => 'required|string|max:20',
-                    'selected_address_jalan' => 'required|string|max:500',
-                ]);
-
-                $paymentMethod = $validated['payment_method'] ?? 'qris';
-                $shippingMethod = $validated['shipping_method'] ?? 'reguler';
-                $shippingCost = $validated['shipping_cost'] ?? 8000;
-                $status = $paymentMethod === 'cod' ? 'diproses' : 'pending';
 
                 $cartItems = CartItem::with('product')
                     ->where('user_id', auth()->id())
@@ -207,13 +212,12 @@ class CartController extends Controller
                     return redirect()->route('cart')->with('error', 'Item yang dipilih tidak ditemukan.');
                 }
 
-                // Check stock availability
                 foreach ($cartItems as $cartItem) {
                     $stockArray = $cartItem->product->stock ?? [];
-                    if (!isset($stockArray[$cartItem->size])) {
-                        return redirect()->route('cart')->with('error', 'Stok produk ' . $cartItem->product->name . ' ukuran ' . $cartItem->size . ' tidak tersedia.');
-                    }
-                    $stock = $stockArray[$cartItem->size];
+                    $stockArray = is_string($stockArray) ? json_decode($stockArray, true) : ($stockArray ?? []);
+                    $stockArray = is_array($stockArray) ? $stockArray : [];
+                    $stock = (int) ($stockArray[$cartItem->size] ?? 0);
+
                     if ($stock < $cartItem->quantity) {
                         return redirect()->route('cart')->with('error', 'Stok untuk ' . $cartItem->product->name . ' ukuran ' . $cartItem->size . ' tidak mencukupi. Stok tersedia: ' . $stock);
                     }
@@ -235,27 +239,21 @@ class CartController extends Controller
                 if (Schema::hasColumn('transactions', 'payment_method')) {
                     $transactionData['payment_method'] = $paymentMethod;
                 }
-
                 if (Schema::hasColumn('transactions', 'shipping_method')) {
                     $transactionData['shipping_method'] = $shippingMethod;
                 }
-
                 if (Schema::hasColumn('transactions', 'shipping_cost')) {
                     $transactionData['shipping_cost'] = $shippingCost;
                 }
-
                 if (Schema::hasColumn('transactions', 'selected_address_name')) {
                     $transactionData['selected_address_name'] = $validated['selected_address_name'];
                 }
-
                 if (Schema::hasColumn('transactions', 'selected_address_phone')) {
                     $transactionData['selected_address_phone'] = $validated['selected_address_phone'];
                 }
-
                 if (Schema::hasColumn('transactions', 'selected_address_jalan')) {
                     $transactionData['selected_address_jalan'] = $validated['selected_address_jalan'];
                 }
-
                 if (Schema::hasColumn('transactions', 'recipient_name')) {
                     $transactionData['recipient_name'] = $validated['selected_address_name'];
                 }
@@ -280,14 +278,15 @@ class CartController extends Controller
                     ->whereIn('id', $selectedIds)
                     ->delete();
 
-                // Reduce stock
                 foreach ($cartItems as $cartItem) {
                     $product = $cartItem->product;
-                    $stock = $product->stock ?? [];
+                    $stockArray = is_string($product->stock) ? json_decode($product->stock, true) : ($product->stock ?? []);
+                    $stockArray = is_array($stockArray) ? $stockArray : [];
+                    $stock = (int) ($stockArray[$cartItem->size] ?? 0);
 
-                    if (isset($stock[$cartItem->size]) && $stock[$cartItem->size] >= $cartItem->quantity) {
-                        $stock[$cartItem->size] -= $cartItem->quantity;
-                        $product->stock = $stock;
+                    if ($stock >= $cartItem->quantity) {
+                        $stockArray[$cartItem->size] -= $cartItem->quantity;
+                        $product->stock = $stockArray;
                         $product->save();
                     } else {
                         return redirect()->route('cart')->with('error', 'Stok untuk ukuran ' . $cartItem->size . ' tidak mencukupi.');
@@ -303,34 +302,81 @@ class CartController extends Controller
                 return redirect()->route('orders.show', $transaction->id)
                                  ->with('success', 'Transaksi berhasil dibuat. ' . ($paymentMethod === 'qris' ? 'Silakan upload bukti transfer setelah pesanan dibuat.' : ''));
             }
-        }
         } catch (\Exception $e) {
-            \Log::error('Checkout error: ' . $e->getMessage());
-            return redirect()->route('cart.index')->with('error', 'Terjadi kesalahan saat checkout.');
+            Log::error('Checkout error: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'is_direct_purchase' => $isDirectPurchase,
+            ]);
+
+            if ($isDirectPurchase) {
+                $productId = $request->query('product_id') ?? $request->post('product_id');
+                if ($productId) {
+                    return redirect()->route('product.detail', $productId)->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                }
+                return redirect()->route('products.index')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            }
+
+            return redirect()->route('cart')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
 
         $cartItems = [];
 
-        if ($request->query('product_id')) {
-            // Direct purchase: buat manual untuk 1 barang tanpa ambil dari db cart_items
-            $productId = $request->query('product_id');
+        if ($isDirectPurchase) {
+            $productId = (int) $request->query('product_id');
             $quantity = max(1, (int) $request->query('quantity', 1));
             $size = $request->query('size');
 
             $product = Product::find($productId);
-            if ($product) {
-                $cartItems[] = [
-                    'id' => 'direct_' . $productId . '_' . $size,
-                    'product_id' => $productId,
-                    'name' => $product->name,
-                    'quantity' => $quantity,
-                    'price' => $product->price,
-                    'image' => $product->images ? asset('storage/' . $product->images[0]) : asset('images/default-product.png'),
-                    'size' => $size,
-                ];
+            if (!$product) {
+                return redirect()->route('products.index')->with('error', 'Produk tidak ditemukan.');
             }
-        } elseif (auth()->check()) {
-            // Alur normal: ambil dari database cart_items
+
+            if (!$size || !in_array((string) $size, ['39', '40', '41', '42', '43'], true)) {
+                return redirect()->route('product.detail', $productId)->with('error', 'Ukuran tidak valid.');
+            }
+
+            $stockArray = is_string($product->stock) ? json_decode($product->stock, true) : ($product->stock ?? []);
+            $stockArray = is_array($stockArray) ? $stockArray : [];
+            $availableStock = (int) ($stockArray[$size] ?? 0);
+
+            Log::info('Stock check for direct purchase GET', [
+                'product_id' => $productId,
+                'size' => $size,
+                'quantity' => $quantity,
+                'stock_raw' => $product->stock,
+                'stock_decoded' => $stockArray,
+                'available_stock' => $availableStock,
+            ]);
+
+            if ($availableStock < $quantity) {
+                return redirect()->route('product.detail', $productId)->with('error', 'Stok tidak mencukupi. Tersedia: ' . $availableStock);
+            }
+
+            $cartItems[] = [
+                'id' => 'direct_' . $productId . '_' . $size,
+                'product_id' => $productId,
+                'name' => $product->name,
+                'quantity' => $quantity,
+                'price' => $product->price,
+                'image' => $product->images ? asset('storage/' . $product->images[0]) : asset('images/default-product.png'),
+                'size' => $size,
+            ];
+        } else {
+            $selectedItems = $request->input('selected_items', $request->query('selected_items', []));
+            if (!is_array($selectedItems)) {
+                $selectedItems = [$selectedItems];
+            }
+
+            $selectedIds = array_values(array_filter(array_map('intval', $selectedItems), function ($id) {
+                return $id > 0;
+            }));
+
+            if (empty($selectedIds)) {
+                return redirect()->route('cart')->with('error', 'Pilih minimal satu produk terlebih dahulu sebelum checkout.');
+            }
+
             $dbItems = CartItem::with('product')
                 ->where('user_id', auth()->id())
                 ->whereIn('id', $selectedIds)
@@ -347,20 +393,7 @@ class CartController extends Controller
                     'size' => $item->size,
                 ];
             }
-        } else {
-            // Dari session cart
-            $sessionCart = session()->get('cart', []);
-            if (!empty($sessionCart) && isset($sessionCart[0]['id'])) {
-                $cartItems = array_values(array_filter($sessionCart, function ($item) use ($selectedIds) {
-                    $hasValidSize = isset($item['size']) && in_array((string) $item['size'], ['39', '40', '41', '42', '43'], true);
-                    return $hasValidSize && in_array((int) ($item['id'] ?? 0), $selectedIds, true);
-                }));
-            }
         }
-
-        // if (empty($cart)) {
-        //     return redirect()->route('cart')->with('error', 'Tidak ada produk yang dipilih untuk checkout.');
-        // }
 
         $user = auth()->user();
         $storedAddresses = session('checkout_addresses', []);
@@ -392,10 +425,6 @@ class CartController extends Controller
 
         $selectedAddressIndex = session('checkout_selected_address', 0);
         session()->put('checkout_previous_url', url()->previous());
-
-        if ($request->query('product_id')) {
-            // Direct purchase detected
-        }
 
         return view('checkout', ['cart' => $cartItems, 'checkoutAddresses' => $checkoutAddresses, 'selectedAddressIndex' => $selectedAddressIndex]);
     }
@@ -502,6 +531,14 @@ class CartController extends Controller
             $action = 'add_to_cart';
         }
 
+        if ($action === 'buy_now') {
+            return redirect()->route('checkout.direct', [
+                'product_id' => $id,
+                'quantity' => $quantity,
+                'size' => $size,
+            ]);
+        }
+
         $cart = session()->get('cart', []);
         $foundIndex = null;
         $nextId = 1;
@@ -598,7 +635,11 @@ class CartController extends Controller
         }
 
         if ($action === 'buy_now') {
-            return redirect()->to('/checkout?product_id=' . $id . '&quantity=' . $quantity . '&size=' . $size);
+            return redirect()->route('checkout.direct', [
+                'product_id' => $id,
+                'quantity' => $quantity,
+                'size' => $size
+            ]);
         }
 
         return back()->with('success', 'Produk masuk keranjang');
@@ -729,5 +770,48 @@ class CartController extends Controller
         }
 
         return response()->json(['count' => $count]);
+    }
+
+    public function uploadProof(Request $request, $id)
+    {
+        $order = Transaction::findOrFail($id);
+
+        if (auth()->id() !== $order->user_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        try {
+            $file = $request->file('payment_proof');
+            $fileName = 'proof_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('proof_payments', $fileName, 'public');
+
+            $order->update([
+                'proof_image' => 'storage/' . $filePath,
+                'status' => 'valid',
+            ]);
+
+            Log::info('Payment proof uploaded successfully', [
+                'transaction_id' => $id,
+                'file_path' => $filePath,
+                'user_id' => auth()->id(),
+                'file_name' => $fileName,
+            ]);
+
+            return redirect()->route('orders.show', $id)->with('success', 'Bukti pembayaran berhasil diunggah dan pesanan Anda telah dikonfirmasi.');
+        } catch (\Exception $e) {
+            Log::error('Payment proof upload failed', [
+                'transaction_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()->route('orders.show', $id)->with('error', 'Gagal mengunggah bukti pembayaran: ' . $e->getMessage());
+        }
     }
 }

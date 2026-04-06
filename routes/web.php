@@ -120,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Checkout (untuk semua role yang sudah login)
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::get('/checkout/direct', [CartController::class, 'checkout'])->name('checkout.direct');
     Route::post('/orders', [CartController::class, 'checkout'])->name('order.store');
     Route::post('/checkout/address', [CartController::class, 'saveAddress'])->name('checkout.address.store');
     
