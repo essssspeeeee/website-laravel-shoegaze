@@ -197,7 +197,9 @@
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                @if($order->status === 'pending')
                 <a href="{{ route('orders.index') }}" class="inline-flex items-center justify-center rounded-[28px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">Batalkan Pesanan</a>
+                @endif
                 <a href="{{ route('home') }}" class="inline-flex items-center justify-center rounded-[28px] bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700">Kembali ke Beranda</a>
             </div>
         </div>

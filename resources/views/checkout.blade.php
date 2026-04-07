@@ -65,12 +65,13 @@
                     @foreach($cart as $item)
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5 last:border-0 last:pb-0">
                         <div class="flex items-center gap-4">
-                            <div class="w-24 h-24 rounded-[28px] overflow-hidden bg-slate-100 border border-slate-200">
-                                <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="w-full h-full object-cover">
+                            <div class="w-20 h-20 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0">
+                                <img src="{{ $item['image'] ?: asset('images/default-product.png') }}" alt="{{ $item['name'] }}" class="w-full h-full object-cover">
                             </div>
-                            <div>
-                                <p class="text-sm uppercase tracking-[0.24em] text-slate-500">{{ $item['name'] }}</p>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm uppercase tracking-[0.24em] text-slate-500 truncate">{{ $item['name'] }}</p>
                                 <p class="mt-2 text-base font-semibold text-slate-900">Size {{ $item['size'] }}</p>
+                                <p class="mt-1 text-sm text-slate-500">Rp {{ number_format($item['price'], 0, ',', '.') }}</p>
                             </div>
                         </div>
                         <div class="text-right">

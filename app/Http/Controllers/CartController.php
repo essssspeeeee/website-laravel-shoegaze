@@ -360,7 +360,7 @@ class CartController extends Controller
                 'name' => $product->name,
                 'quantity' => $quantity,
                 'price' => $product->price,
-                'image' => $product->images ? asset('storage/' . $product->images[0]) : asset('images/default-product.png'),
+                'image' => $product->images ? asset('img/product/' . $product->images[0]) : asset('images/default-product.png'),
                 'size' => $size,
             ];
         } else {
@@ -389,7 +389,7 @@ class CartController extends Controller
                     'name' => $item->product->name,
                     'quantity' => $item->quantity,
                     'price' => $item->product->price,
-                    'image' => $item->product->images ? asset('storage/' . $item->product->images[0]) : asset('images/default-product.png'),
+                    'image' => $item->product->images ? asset('img/product/' . $item->product->images[0]) : asset('images/default-product.png'),
                     'size' => $item->size,
                 ];
             }
