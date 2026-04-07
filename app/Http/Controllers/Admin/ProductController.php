@@ -48,7 +48,9 @@ class ProductController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 if ($file && $file->isValid()) {
-                    $paths[] = $file->store('products', 'public');
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('img/product'), $filename);
+                    $paths[] = $filename;
                 }
             }
             $validated['images'] = $paths;
@@ -102,7 +104,10 @@ class ProductController extends Controller
             if (is_array($removed)) {
                 foreach ($removed as $removePath) {
                     if (in_array($removePath, $currentImages)) {
-                        Storage::disk('public')->delete($removePath);
+                        $filePath = public_path('img/product/' . $removePath);
+                        if (file_exists($filePath)) {
+                            unlink($filePath);
+                        }
                         $currentImages = array_diff($currentImages, [$removePath]);
                     }
                 }
@@ -114,7 +119,9 @@ class ProductController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 if ($file && $file->isValid()) {
-                    $newPaths[] = $file->store('products', 'public');
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('img/product'), $filename);
+                    $newPaths[] = $filename;
                 }
             }
         }
@@ -157,7 +164,10 @@ class ProductController extends Controller
     {
         if (is_array($product->images)) {
             foreach ($product->images as $image) {
-                Storage::disk('public')->delete($image);
+                $filePath = public_path('img/product/' . $image);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
             }
         }
 

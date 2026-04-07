@@ -67,7 +67,7 @@
                             $quantity = $item->quantity;
                             $productImage = 'https://via.placeholder.com/80';
                             if (optional($item->product)->images && is_array($item->product->images) && count($item->product->images) > 0) {
-                                $productImage = asset('storage/' . $item->product->images[0]);
+                                $productImage = asset('img/product/' . $item->product->images[0]);
                             }
                         @endphp
 

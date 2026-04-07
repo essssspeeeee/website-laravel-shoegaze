@@ -137,7 +137,7 @@
                             @foreach($order->items ?? [] as $item)
                                 <div class="flex items-center gap-4 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                                     <div class="h-20 w-20 overflow-hidden rounded-3xl bg-slate-100">
-                                        <img src="{{ optional($item->product)->images ? asset('storage/' . optional($item->product)->images[0]) : asset('images/default-product.png') }}" alt="{{ optional($item->product)->name }}" class="h-full w-full object-cover" />
+                                        <img src="{{ optional($item->product)->images ? asset('img/product/' . optional($item->product)->images[0]) : asset('images/default-product.png') }}" alt="{{ optional($item->product)->name }}" class="h-full w-full object-cover" />
                                     </div>
                                     <div class="flex-1">
                                         <p class="text-sm font-semibold text-slate-900">{{ optional($item->product)->name ?? 'Produk tidak diketahui' }}</p>
@@ -219,7 +219,7 @@
             <!-- Modal Body -->
             <div class="p-6 sm:p-8">
                 <div class="bg-slate-50 rounded-[24px] p-6 flex items-center justify-center mb-4">
-                    <img src="{{ asset('img/payments/qris-toko.png') }}" alt="Kode QRIS" class="w-full max-w-xs rounded-lg object-contain" />
+                    <img src="{{ asset('images/payments/qris-toko.png.jpeg') }}" alt="Kode QRIS" class="w-full max-w-xs rounded-lg object-contain" />
                 </div>
                 
                 <div class="space-y-4">
@@ -274,7 +274,7 @@ function updatePaymentTimer() {
     const timerElement = document.getElementById('payment-timer');
     if (!timerElement) return;
 
-    const deadlineTimestamp = {{ $deadlineTimestamp ?? 'null' }};
+    const deadlineTimestamp = @json($deadlineTimestamp);
     if (!deadlineTimestamp) {
         timerElement.textContent = 'Waktu habis';
         return;

@@ -51,7 +51,7 @@
                                 }
                             @endphp
                             @if($imgPath)
-                                <img src="{{ asset('storage/' . $imgPath) }}" alt="" class="w-12 h-12 object-cover rounded">
+                                <img src="{{ asset('img/product/' . $imgPath) }}" alt="" class="w-12 h-12 object-cover rounded">
                             @else
                                 -
                             @endif
@@ -162,7 +162,7 @@
                                     <div class="flex flex-wrap gap-2">
                                         <template x-for="(image, index) in editProduct.images" :key="index">
                                             <div class="relative">
-                                                <img :src="'/storage/' + image" alt="Current image" class="w-16 h-16 object-cover rounded border">
+                                                <img :src="'/img/product/' + image" alt="Current image" class="w-16 h-16 object-cover rounded border">
                                                 <button type="button" @click="removeImage(index)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
                                             </div>
                                         </template>
@@ -204,24 +204,26 @@
             document.addEventListener('DOMContentLoaded', function() {
                 // ensure prefix available in Alpine state
                 window.__prefix = '{{ $prefix }}';
+
                 @if(old('_method') == 'PATCH')
+                    // Edit mode
                     document.querySelector('[x-data]').__x.$data.showEditModal = true;
-                    // populate form with old input
-                    let data = {{ json_encode(old()) }};
+                    let editData = @json(old());
                     Object.assign(document.querySelector('[x-data]').__x.$data.form, {
-                        name: data.name || '',
-                        price: data.price || '',
-                        stock: data.stock ? Object.assign({ '39':0,'40':0,'41':0,'42':0,'43':0 }, data.stock) : { '39':0,'40':0,'41':0,'42':0,'43':0 },
-                        description: data.description || ''
+                        name: editData.name || '',
+                        price: editData.price || '',
+                        stock: editData.stock ? Object.assign({ '39':0,'40':0,'41':0,'42':0,'43':0 }, editData.stock) : { '39':0,'40':0,'41':0,'42':0,'43':0 },
+                        description: editData.description || ''
                     });
                 @else
+                    // Add mode
                     document.querySelector('[x-data]').__x.$data.showAddModal = true;
-                    let data = {{ json_encode(old()) }};
+                    let addData = @json(old());
                     Object.assign(document.querySelector('[x-data]').__x.$data.form, {
-                        name: data.name || '',
-                        price: data.price || '',
-                        stock: data.stock ? Object.assign({ '39':0,'40':0,'41':0,'42':0,'43':0 }, data.stock) : { '39':0,'40':0,'41':0,'42':0,'43':0 },
-                        description: data.description || ''
+                        name: addData.name || '',
+                        price: addData.price || '',
+                        stock: addData.stock ? Object.assign({ '39':0,'40':0,'41':0,'42':0,'43':0 }, addData.stock) : { '39':0,'40':0,'41':0,'42':0,'43':0 },
+                        description: addData.description || ''
                     });
                 @endif
             });

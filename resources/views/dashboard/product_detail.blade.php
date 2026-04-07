@@ -34,7 +34,7 @@
                         <button type="button"
                             @click="setMain({{ $index }})"
                             :class="['thumbnail-btn overflow-hidden', selectedImage === {{ $index }} ? 'border-[#E55353]' : 'border-gray-200']">
-                            <img src="{{ asset('storage/' . $image) }}" class="w-full h-full object-cover">
+                            <img src="{{ asset('img/product/' . $image) }}" class="w-full h-full object-cover">
                         </button>
                     @endforeach
                 </div>
@@ -214,7 +214,7 @@
 <script>
     function gallery() {
         const rawImages = @json($product->images ?? []) || [];
-        const basePath = '{{ asset('storage') }}';
+        const basePath = '{{ asset("img/product") }}';
         const images = rawImages.length
             ? rawImages.map(image => image ? basePath + '/' + image : null).filter(Boolean)
             : [];

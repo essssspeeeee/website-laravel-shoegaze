@@ -6,11 +6,8 @@
     <main class="max-w-7xl mx-auto px-6 md:px-12 py-8">
         
         <div class="mb-14 relative rounded-xl overflow-hidden shadow-sm border border-gray-100">
-            <img src="{{ asset('images/main-banner.jpg') }}" alt="Promo" class="w-full object-cover h-[300px] md:h-[400px]">
-            <div class="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent flex flex-col justify-center px-10 md:px-16 text-white">
-                <span class="text-sm font-semibold tracking-wider">910 NINETEN</span>
-                <h2 class="text-4xl font-black italic uppercase leading-none mt-2">GEIST EKIDEN ELITE</h2>
-                <p class="mt-5 text-sm font-bold border-b-2 border-white w-max pb-1 hover:text-gray-200 cursor-pointer">Shop Now</p>
+            <div class="relative w-full h-64 md:h-[500px] bg-gray-200">
+                <img src="{{ asset('img/banners/hero-banner.jpg') }}" alt="Banner Shoegaze" class="absolute inset-0 w-full h-full object-cover object-center z-0">
             </div>
         </div>
 
@@ -30,7 +27,7 @@
                         @php
                             $firstImage = is_array($product->images) && count($product->images) ? $product->images[0] : null;
                         @endphp
-                        <img src="{{ $firstImage ? asset('storage/' . $firstImage) : asset('images/default-product.png') }}"
+                        <img src="{{ $firstImage ? asset('img/product/' . $firstImage) : asset('images/default-product.png') }}"
                              alt="{{ $product->name }}" class="w-4/5 transform group-hover:scale-110 transition-transform duration-500">
                     </div>
                     <h3 class="font-bold text-[11px] uppercase mb-1 h-8 line-clamp-2">{{ $product->name }}</h3>
@@ -53,7 +50,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto md:h-[600px] mb-10">
             <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                <img src="{{ asset('images/ads1.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                 <div class="absolute top-10 left-10 bg-white p-6 rounded-lg shadow-xl max-w-[240px]">
                     <h4 class="font-black text-2xl italic uppercase mb-1 leading-none tracking-tighter">KANZAKI 2.0</h4>
                     <p class="text-xs text-gray-500 font-medium">Run Strong. Run Confident.</p>
@@ -62,14 +59,14 @@
             
             <div class="grid grid-rows-2 gap-6">
                 <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                    <img src="{{ asset('images/ads2.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                     <div class="absolute top-6 right-6 bg-white p-5 rounded-lg shadow-lg max-w-[200px]">
                         <h4 class="font-black text-sm uppercase mb-1">AURORUM CITY</h4>
                         <p class="text-[10px] text-gray-500 leading-tight">Light. Responsive. Built to Run Everyday.</p>
                     </div>
                 </div>
                 <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                    <img src="{{ asset('images/ads3.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                     <div class="absolute bottom-6 right-6 bg-white p-5 rounded-lg shadow-lg max-w-[220px]">
                         <h4 class="font-black text-sm italic uppercase mb-1">Haze Flow</h4>
                         <p class="text-[10px] text-gray-500 leading-relaxed">

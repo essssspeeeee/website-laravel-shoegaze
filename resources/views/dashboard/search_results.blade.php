@@ -20,7 +20,7 @@
             <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition flex flex-col overflow-hidden">
                 <a href="{{ route('product.detail', $product->id) }}" class="block">
                     <div class="bg-slate-100 flex items-center justify-center h-48 md:h-56 overflow-hidden">
-                        <img src="{{ is_array($product->images) && count($product->images) > 0 ? asset('storage/' . $product->images[0]) : 'https://via.placeholder.com/300x300' }}" alt="{{ $product->name }}" class="object-contain w-full h-full hover:scale-105 transition-transform duration-500">
+                        <img src="{{ is_array($product->images) && count($product->images) > 0 ? asset('img/product/' . $product->images[0]) : 'https://via.placeholder.com/300x300' }}" alt="{{ $product->name }}" class="object-contain w-full h-full hover:scale-105 transition-transform duration-500">
                     </div>
                     <div class="p-4">
                         <h3 class="font-semibold text-base text-slate-900 mb-1 truncate">{{ $product->name }}</h3>
