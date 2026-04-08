@@ -51,7 +51,7 @@
                         <td class="px-5 py-3">{{ $ord->user->name }}</td>
                         <td class="px-5 py-3">{{ \Carbon\Carbon::parse($ord->created_at)->format('d/m/Y') }}</td>
                         <td class="px-5 py-3 italic text-gray-600">
-                            @if($ord->status=='waiting') Diproses
+                            @if($ord->status=='waiting') Menunggu Konfirmasi
                             @elseif($ord->status=='valid') Selesai
                             @elseif($ord->status=='rejected') Ditolak
                             @else {{ $ord->status }}

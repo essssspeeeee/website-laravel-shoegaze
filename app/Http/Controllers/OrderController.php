@@ -24,6 +24,8 @@ class OrderController extends Controller
                 $query->where('status', 'shipping');
             } elseif ($statusFilter === 'selesai') {
                 $query->where('status', 'valid');
+            } elseif ($statusFilter === 'dibatalkan') {
+                $query->whereIn('status', ['cancelled', 'rejected']);
             }
         }
 
@@ -42,5 +44,18 @@ class OrderController extends Controller
         }
 
         return view('dashboard.orders', compact('orders', 'statusFilter'));
+    }
+
+    public function cancelOrder(Request $request, $id)
+    {
+        $order = Transaction::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+
+        if (!in_array($order->status, ['pending', 'waiting'])) {
+            return back()->withErrors(['error' => 'Pesanan tidak dapat dibatalkan karena status sudah berubah.']);
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Pesanan Anda telah berhasil dibatalkan.');
     }
 }

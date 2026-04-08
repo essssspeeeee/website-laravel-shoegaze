@@ -2,12 +2,80 @@
 
 @section('title', 'Shoegaze - Dashboard User')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<style>
+/* Swiper custom styles */
+.swiper {
+    position: relative;
+}
+
+.swiper .swiper-button-next,
+.swiper .swiper-button-prev {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.swiper:hover .swiper-button-next,
+.swiper:hover .swiper-button-prev {
+    opacity: 1;
+}
+
+.swiper .swiper-button-next::after,
+.swiper .swiper-button-prev::after {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.swiper .swiper-pagination {
+    bottom: 20px !important;
+}
+
+.swiper .swiper-pagination-bullet {
+    background: white;
+    opacity: 0.7;
+}
+
+.swiper .swiper-pagination-bullet-active {
+    opacity: 1;
+    background: #db4444;
+}
+</style>
+@endpush
+
 @section('content')
     <main class="max-w-7xl mx-auto px-6 md:px-12 py-8">
         
         <div class="mb-14 relative rounded-xl overflow-hidden shadow-sm border border-gray-100">
-            <div class="relative w-full h-64 md:h-[500px] bg-gray-200">
-                <img src="{{ asset('img/banners/hero-banner.jpg') }}" alt="Banner Shoegaze" class="absolute inset-0 w-full h-full object-cover object-center z-0">
+            <div class="swiper w-full h-64 md:h-[500px]">
+                <div class="swiper-wrapper">
+                    @if(count($banners) > 0)
+                        @foreach($banners as $banner)
+                        <div class="swiper-slide">
+                            <img src="{{ asset('img/banners/' . $banner) }}" alt="Banner Shoegaze" 
+                                 class="w-full h-full object-cover object-center">
+                        </div>
+                        @endforeach
+                    @else
+                        <div class="swiper-slide">
+                            <img src="{{ asset('img/banners/hero-banner.jpg') }}" alt="Banner Shoegaze" 
+                                 class="w-full h-full object-cover object-center">
+                        </div>
+                    @endif
+                </div>
+                <!-- Navigation arrows -->
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <!-- Pagination -->
+                <div class="swiper-pagination"></div>
             </div>
         </div>
 
@@ -104,3 +172,26 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const swiper = new Swiper('.swiper', {
+        loop: true,
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+    });
+});
+</script>
+@endpush

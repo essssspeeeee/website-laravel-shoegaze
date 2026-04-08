@@ -4,6 +4,12 @@
 
 @section('content')
 
+@if(session('success'))
+    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+        {{ session('success') }}
+    </div>
+@endif
+
 @php
     $createdAt = $order->created_at ? \Carbon\Carbon::parse($order->created_at) : null;
     $deadline = $createdAt ? $createdAt->copy()->addDay() : null;
@@ -26,7 +32,7 @@
 <div class="min-h-screen bg-slate-50 py-10">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="space-y-6">
-            <div class="rounded-[32px] bg-white border border-slate-200 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.2)] p-6 sm:p-8">
+            <div class="rounded-[32px] bg-white border border-slate-200 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.2)] p-6 sm:p-8 {{ $order->status === 'cancelled' ? 'opacity-50' : '' }}">
                 <h1 class="text-2xl font-semibold text-slate-900">{{ $statusLabel }}</h1>
                 @if($order->status === 'shipping')
                     <p class="mt-2 text-sm text-blue-700 font-semibold">Paket dikirim pada {{ optional($order->updated_at)->format('d F Y H:i') }}</p>
@@ -34,7 +40,7 @@
                 @elseif($order->status === 'valid')
                     <p class="mt-2 text-sm text-green-700 font-semibold">Pesanan diterima pada {{ optional($order->updated_at)->format('d F Y H:i') }}</p>
                 @else
-                    <p class="mt-2 text-sm text-slate-500">Sisa waktu pembayaran: <span id="payment-timer" class="font-semibold text-red-600">--:--</span></p>
+                    <p class="mt-2 text-sm text-slate-500">Sisa waktu pembayaran: <span id="payment-timer" class="font-semibold text-red-600" data-deadline="{{ $deadlineTimestamp ? $deadlineTimestamp : '' }}">--:--</span></p>
                 @endif
             </div>
 
@@ -54,7 +60,7 @@
                         </div>
                         <div class="mt-5 rounded-[24px] bg-white border border-slate-200 p-5">
                             @php $paymentMethod = strtolower($order->payment_method ?? $order->method ?? 'qris'); @endphp
-                            @if($paymentMethod === 'qris')
+                            @if($paymentMethod === 'qris' && $order->status !== 'cancelled')
                                 <div class="flex items-center justify-between">
                                     <p class="text-sm font-semibold text-slate-900">Instruksi Pembayaran QRIS</p>
                                     <button type="button" data-modal-toggle="qris-modal" class="inline-flex items-center justify-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition duration-200">
@@ -64,8 +70,21 @@
                                 <p class="mt-3 text-sm text-slate-600">
                                     Silakan lakukan pembayaran menggunakan kode QRIS di atas. Setelah transfer, unggah bukti pembayaran di bawah untuk konfirmasi pesanan.
                                 </p>
+                            @endif
                                 
-                                @if(!empty($order->proof_image))
+                                @if($order->status === 'cancelled')
+                                    <div class="mt-5 rounded-[24px] border-2 border-red-200 bg-red-50 p-4">
+                                        <div class="flex items-start gap-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                            </svg>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-semibold text-red-900">Pesanan Dibatalkan</p>
+                                                <p class="mt-1 text-xs text-red-700">Pesanan ini telah dibatalkan dan tidak dapat diproses pembayaran.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif(!empty($order->proof_image))
                                     <div class="mt-5 rounded-[24px] border-2 border-green-200 bg-green-50 p-4">
                                         <div class="flex items-start gap-3">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
@@ -108,8 +127,9 @@
                                             <p class="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">✕ {{ $message }}</p>
                                         @enderror
                                     </form>
-                                @endif
-                            @else
+                            @endif
+                            
+                            @if($paymentMethod !== 'qris')
                                 <p class="text-sm font-semibold text-slate-900">Pembayaran Tunai (COD)</p>
                                 <p class="mt-2 text-sm text-slate-600">Bayar jumlah di atas saat paket diterima. Siapkan uang pas jika memungkinkan.</p>
                                 <div class="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3">
@@ -204,8 +224,12 @@
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                @if($order->status === 'pending')
-                <a href="{{ route('orders.index') }}" class="inline-flex items-center justify-center rounded-[28px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">Batalkan Pesanan</a>
+                @if(in_array($order->status, ['pending', 'waiting']))
+                <form method="POST" action="{{ route('orders.cancel', $order->id) }}" class="inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="inline-flex items-center justify-center rounded-[28px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">Batalkan Pesanan</button>
+                </form>
                 @endif
                 <a href="{{ route('home') }}" class="inline-flex items-center justify-center rounded-[28px] bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700">Kembali ke Beranda</a>
             </div>
@@ -283,13 +307,13 @@ function updatePaymentTimer() {
     const timerElement = document.getElementById('payment-timer');
     if (!timerElement) return;
 
-    const deadlineTimestamp = @json($deadlineTimestamp);
+    const deadlineTimestamp = timerElement.getAttribute('data-deadline');
     if (!deadlineTimestamp) {
         timerElement.textContent = 'Waktu habis';
         return;
     }
 
-    const deadline = new Date(deadlineTimestamp);
+    const deadline = new Date(parseInt(deadlineTimestamp));
     const now = new Date();
     const remainingMs = deadline - now;
 

@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
@@ -29,6 +30,8 @@
 
     @stack('scripts')
 
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     <script>
         // Global function for adding to cart
         function addToCart(productId, size = null, qty = 1) {
@@ -38,6 +41,12 @@
             formData.append('quantity', qty);
             if (size) {
                 formData.append('size', size);
+            } else {
+                // If no size provided, try to get from radio button or input
+                const sizeInput = document.querySelector('input[name="size"]:checked') || document.querySelector('input[name="size"]');
+                if (sizeInput) {
+                    formData.append('size', sizeInput.value);
+                }
             }
 
             const csrfToken = document.querySelector('meta[name=csrf-token]');

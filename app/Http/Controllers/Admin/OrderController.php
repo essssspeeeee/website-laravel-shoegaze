@@ -28,10 +28,18 @@ class OrderController extends Controller
     public function update(Request $request, Transaction $order)
     {
         $request->validate([
-            'status' => 'required|in:waiting,valid,rejected,shipping',
+            'status' => 'required|in:pending,processing,shipping,valid,cancelled',
         ]);
 
-        $order->status = $request->status;
+        $statusMapping = [
+            'pending' => 'pending',
+            'processing' => 'packed',
+            'shipping' => 'shipping',
+            'valid' => 'valid',
+            'cancelled' => 'cancelled',
+        ];
+
+        $order->status = $statusMapping[$request->status] ?? $order->status;
         $order->save();
 
         $route = auth()->user() && auth()->user()->role === 'petugas' ? 'staff.orders.index' : 'admin.orders.index';

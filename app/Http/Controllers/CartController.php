@@ -25,7 +25,7 @@ class CartController extends Controller
                     'name' => $item->product->name,
                     'quantity' => $item->quantity,
                     'price' => $item->product->price,
-                    'image' => $item->product->images ? asset('storage/' . $item->product->images[0]) : asset('images/default-product.png'),
+                    'image' => $item->product->images ? asset('img/product/' . $item->product->images[0]) : 'https://via.placeholder.com/150x150?text=No+Image',
                     'size' => $item->size,
                     'maxStock' => $item->product->stock[$item->size] ?? 0,
                 ];
@@ -54,7 +54,7 @@ class CartController extends Controller
                     }
                     // Jika image tidak ada, ambil dari product
                     if (!isset($item['image']) || $item['image'] === null) {
-                        $item['image'] = $product->images ? asset('storage/' . $product->images[0]) : asset('images/default-product.png');
+                        $item['image'] = $product->images ? asset('img/product/' . $product->images[0]) : 'https://via.placeholder.com/150x150?text=No+Image';
                     }
                     // Jika name tidak ada, ambil dari product
                     if (!isset($item['name']) || $item['name'] === null) {
@@ -441,6 +441,7 @@ class CartController extends Controller
         ]);
 
         $slot = (int) $validated['slot_index'];
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         if ($slot === 0) {
@@ -586,7 +587,7 @@ class CartController extends Controller
                 'name' => $product->name,
                 'quantity' => $quantity,
                 'price' => $product->price,
-                'image' => $product->images ? asset('storage/' . $product->images[0]) : asset('images/default-product.png'),
+                'image' => $product->images ? asset('img/product/' . $product->images[0]) : 'https://via.placeholder.com/150x150?text=No+Image',
                 'size' => $size,
                 'maxStock' => $maxStock,
             ];
@@ -798,6 +799,11 @@ class CartController extends Controller
             abort(403);
         }
 
+        // Check if order is still pending
+        if ($order->status !== 'pending') {
+            return redirect()->route('orders.show', $id)->with('error', 'Maaf, pesanan yang sudah dibatalkan tidak bisa dibayar.');
+        }
+
         $validated = $request->validate([
             'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -809,7 +815,7 @@ class CartController extends Controller
 
             $order->update([
                 'proof_image' => 'storage/' . $filePath,
-                'status' => 'valid',
+                'status' => 'waiting',
             ]);
 
             Log::info('Payment proof uploaded successfully', [

@@ -112,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/orders/{id}', [CartController::class, 'showOrder'])->name('orders.show');
         Route::post('/orders/{id}/upload', [CartController::class, 'uploadProof'])->name('orders.upload');
         Route::patch('/orders/{id}/receive', [CartController::class, 'confirmReceived'])->name('orders.receive');
+        Route::patch('/orders/{id}/cancel', [\App\Http\Controllers\OrderController::class, 'cancelOrder'])->name('orders.cancel');
     });
 
     // Fitur Keranjang (untuk semua role yang sudah login - di luar user role group)

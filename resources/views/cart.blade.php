@@ -58,13 +58,14 @@
                                             x-model.number="item.quantity" 
                                             @input="updateQty(key)"
                                             @change="updateQty(key)"
+                                            @blur="validateQty(key)"
                                             class="w-10 text-center text-sm border-none focus:ring-0 p-1 font-bold" 
                                             min="1"
                                             :max="parseInt(item.maxStock) > 0 ? parseInt(item.maxStock) : 999999"
                                             inputmode="numeric">
-                                        <p x-show="parseInt(item.maxStock) > 0 && parseInt(item.quantity) >= parseInt(item.maxStock)" class="text-xs text-red-600 mt-1">Stok terbatas!</p>
+                                        <p x-show="parseInt(item.maxStock) > 0 && parseInt(item.quantity) >= parseInt(item.maxStock)" class="text-xs text-red-600 mt-1">Stok maksimal tercapai</p>
                                     </div>
-                                    <button type="button" @click="increaseQty(key)" :disabled="parseInt(item.maxStock) > 0 && parseInt(item.quantity) >= parseInt(item.maxStock)" class="px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">+</button>
+                                    <button type="button" @click="increaseQty(key)" :disabled="parseInt(item.maxStock) > 0 && parseInt(item.quantity) >= parseInt(item.maxStock)" :class="parseInt(item.maxStock) > 0 && parseInt(item.quantity) >= parseInt(item.maxStock) ? 'px-3 py-1 bg-gray-200 text-gray-400 cursor-not-allowed font-bold' : 'px-3 py-1 bg-gray-50 hover:bg-gray-200 font-bold transition'">+</button>
                                 </div>
                             </div>
 
@@ -136,7 +137,7 @@
             totalAmount: 0,
             shippingCost: 8000,
             items: {},
-            updateUrlTemplate: '{{ route('cart.update', ['id' => 'CART_ID_PLACEHOLDER']) }}',
+            updateUrlTemplate: '{{ route("cart.update", ["id" => "CART_ID_PLACEHOLDER"]) }}',
             
             init() {
                 const cartData = JSON.parse(document.getElementById('cart-data').dataset.items);
@@ -200,10 +201,9 @@
                 const maxStock = parseInt(item.maxStock) || 0;
                 const currentQty = parseInt(item.quantity) || 1;
                 
-                // Only prevent increase if maxStock is valid (> 0) and quantity at or above limit
+                // Prevent increase if already at or above max stock
                 if (maxStock > 0 && currentQty >= maxStock) {
-                    alert('Stok terbatas! Maksimal kuantitas untuk produk ini adalah ' + maxStock);
-                    return;
+                    return; // Silently prevent increase
                 }
                 
                 item.quantity = currentQty + 1;
@@ -232,17 +232,36 @@
                 
                 // Validate minimum quantity
                 if (qty < 1) {
-                    item.quantity = 1;
-                    return;
+                    qty = 1;
                 }
                 
                 // Validate maximum quantity based on stock
                 if (maxStock > 0 && qty > maxStock) {
-                    alert('Stok terbatas! Maksimal kuantitas untuk produk ini adalah ' + maxStock);
-                    item.quantity = maxStock;
-                    this.calculateTotal();
-                    this.syncQuantity(item);
-                    return;
+                    qty = maxStock;
+                }
+                
+                // Ensure quantity is set correctly
+                item.quantity = qty;
+                this.calculateTotal();
+                this.syncQuantity(item);
+            },
+
+            validateQty(key) {
+                const item = this.items[key];
+                if (!item) return;
+                
+                let qty = parseInt(item.quantity) || 1;
+                const maxStock = parseInt(item.maxStock) || 0;
+                
+                // Strict validation on blur
+                if (qty < 1) {
+                    qty = 1;
+                }
+                
+                if (maxStock > 0 && qty > maxStock) {
+                    qty = maxStock;
+                    // Optional: Show brief feedback
+                    console.log('Quantity capped to max stock:', maxStock);
                 }
                 
                 item.quantity = qty;

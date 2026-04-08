@@ -12,16 +12,18 @@
         </thead>
         <tbody>
             @forelse($orders as $order)
-                <tr>
+                <tr class="{{ $order->status === 'cancelled' ? 'opacity-50' : '' }}">
                     <td>{{ $order->id }}</td>
                     <td>{{ ucfirst($order->payment_method) }}</td>
                     <td>
-                        <span class="badge bg-{{ $order->status === 'pending' ? 'warning' : 'success' }}">
+                        <span class="badge bg-{{ $order->status === 'pending' ? 'warning' : ($order->status === 'cancelled' ? 'danger' : 'success') }}">
                             {{ ucfirst($order->status) }}
                         </span>
                     </td>
                     <td>
-                        @if($order->payment_method === 'qris' && $order->status === 'pending')
+                        @if($order->status === 'cancelled')
+                            <span class="text-muted">Pesanan telah dibatalkan</span>
+                        @elseif($order->payment_method === 'qris' && $order->status === 'pending')
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#qrisModal{{ $order->id }}">
                                 Upload Bukti Pembayaran
                             </button>
@@ -56,7 +58,7 @@
                             <div class="alert alert-warning">Gambar QRIS tidak tersedia</div>
                         @endif
 
-                        <form action="{{ route('orders.upload-payment', $order->id) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('orders.upload', $order->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="mb-3">
                                 <label for="payment_proof" class="form-label">Upload Foto Struk/Bukti Transfer</label>
@@ -65,20 +67,6 @@
                             </div>
                             <button type="submit" class="btn btn-success">Upload</button>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @elseif($order->payment_method === 'cod')
-        <div class="modal fade" id="codModal{{ $order->id }}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Informasi Pembayaran COD</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong>Harap siapkan uang tunai saat kurir datang</strong></p>
                     </div>
                 </div>
             </div>

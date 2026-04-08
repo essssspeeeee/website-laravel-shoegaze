@@ -51,7 +51,17 @@
                     <td class="px-5 py-3">{{ $user->email }}</td>
                     <td class="px-5 py-3">{{ $user->role }}</td>
                     <td class="px-5 py-3">{{ $user->phone ?? '-' }}</td>
-                    <td class="px-5 py-3">{{ $user->status }}</td>
+                    @php
+                        $isActive = false;
+                        if (! empty($user->last_seen)) {
+                            $isActive = \Carbon\Carbon::parse($user->last_seen)->greaterThan(now()->subMinutes(5));
+                        }
+                    @endphp
+                    <td class="px-5 py-3">
+                        <span class="rounded-full px-3 py-1 text-sm font-semibold {{ $isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                            {{ $isActive ? 'Aktif' : 'Tidak Aktif' }}
+                        </span>
+                    </td>
                     <td class="px-5 py-3">{{ $user->created_at->format('d/m/Y') }}</td>
                     <td class="px-5 py-3 space-x-2">
                         <button type="button" @click="openDetail({{ json_encode($user) }})" class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-[12px]">Detail</button>

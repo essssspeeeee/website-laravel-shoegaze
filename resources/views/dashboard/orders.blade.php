@@ -10,6 +10,16 @@
 
 @section('content')
 @if(auth()->user()->role === 'user')
+    @if(session('success'))
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if($errors->any())
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" class="fixed top-5 right-5 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50">
+            {{ $errors->first() }}
+        </div>
+    @endif
     <main class="max-w-4xl mx-auto px-6 py-10">
     <h1 class="text-3xl font-bold text-slate-900 mb-6">Riwayat Pesanan</h1>
 
@@ -20,6 +30,7 @@
             'dikemas' => 'Dikemas',
             'dikirim' => 'Dikirim',
             'selesai' => 'Selesai',
+            'dibatalkan' => 'Dibatalkan',
         ];
     @endphp
 
@@ -36,9 +47,12 @@
     @else
         @foreach($orders as $order)
             @php
-                if (in_array($order->status, ['waiting', 'pending'])) {
+                if ($order->status === 'pending') {
                     $badgeClass = 'bg-yellow-100 text-yellow-800';
                     $statusLabel = 'Menunggu Pembayaran';
+                } elseif ($order->status === 'waiting') {
+                    $badgeClass = 'bg-yellow-100 text-yellow-800';
+                    $statusLabel = 'Menunggu Verifikasi Admin';
                 } elseif (in_array($order->status, ['diproses', 'packed'])) {
                     $badgeClass = 'bg-blue-100 text-blue-800';
                     $statusLabel = 'Sedang Dikemas';
@@ -91,6 +105,13 @@
                 <div class="mt-4 text-right font-bold text-lg text-slate-900">Total: Rp {{ number_format($order->total, 0, ',', '.') }}</div>
 
                 <div class="mt-4 text-right flex flex-wrap justify-end gap-2">
+                    @if(in_array($order->status, ['pending', 'waiting']))
+                        <form method="POST" action="{{ route('orders.cancel', $order->id) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition">Batalkan</button>
+                        </form>
+                    @endif
                     @if($order->status === 'shipping')
                         <form method="POST" action="{{ route('orders.receive', $order->id) }}" class="inline">
                             @csrf
@@ -146,15 +167,41 @@
                         <td class="px-5 py-3">{{ $order->user->name }}</td>
                         <td class="px-5 py-3">Rp {{ number_format($order->total,0,',','.') }}</td>
                         <td class="px-5 py-3">{{ $order->method }}</td>
+                        @php
+                            $paymentMethod = strtolower($order->payment_method ?? $order->method ?? '');
+                            $proofExists = false;
+                            $proofImageUrl = null;
+                            $proofFile = null;
+
+                            if (!empty($order->payment_proof)) {
+                                $proofFile = ltrim($order->payment_proof, '/');
+                                $proofExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($proofFile);
+                                $proofImageUrl = asset('storage/' . $proofFile);
+                            } elseif (!empty($order->proof_image)) {
+                                $proofFile = ltrim(str_replace('storage/', '', $order->proof_image), '/');
+                                $proofExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($proofFile);
+                                $proofImageUrl = asset('storage/' . $proofFile);
+                            }
+
+                            $orderData = array_merge($order->toArray(), [
+                                'payment_method' => $paymentMethod,
+                                'proof_exists' => $proofExists,
+                                'proof_image_url' => $proofImageUrl,
+                            ]);
+                        @endphp
                         <td class="px-5 py-3">
-                            @if($order->proof_image)
-                                <button @click="openDetail(@json($order->toArray()))" class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-[12px]">Lihat</button>
-                            @else
-                                <button type="button" class="px-3 py-1 bg-gray-200 text-gray-500 rounded text-[12px] cursor-not-allowed" disabled>Lihat</button>
+                            @if($paymentMethod === 'qris')
+                                @if($proofExists)
+                                    <button type="button" @click="openDetail(@json($orderData))" class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-[12px]">Lihat</button>
+                                @else
+                                    <button type="button" class="px-3 py-1 bg-gray-200 text-gray-500 rounded text-[12px] cursor-not-allowed" disabled>Belum diunggah</button>
+                                @endif
                             @endif
                         </td>
                         <td class="px-5 py-3">
-                            @if($order->status == 'waiting' || $order->status == 'diproses')
+                            @if($order->status == 'waiting')
+                                <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Menunggu Konfirmasi</span>
+                            @elseif($order->status == 'diproses')
                                 <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Diproses</span>
                             @elseif($order->status == 'pending')
                                 <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">Pending</span>
@@ -166,33 +213,53 @@
                                 <span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Diterima</span>
                             @elseif($order->status == 'rejected')
                                 <span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Ditolak</span>
+                            @elseif($order->status == 'cancelled')
+                                <span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Dibatalkan</span>
                             @else
                                 <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">{{ ucfirst($order->status) }}</span>
                             @endif
                         </td>
-                        <td class="px-5 py-3 space-x-2">
-                            @if(in_array($order->status, ['waiting', 'pending']))
-                                <form method="POST" action="{{ route($prefix . '.orders.update', $order) }}" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="valid">
-                                    <button type="submit" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-[12px]">Terima</button>
-                                </form>
-                                <form method="POST" action="{{ route($prefix . '.orders.update', $order) }}" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="rejected">
-                                    <button type="submit" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[12px]">Tolak</button>
-                                </form>
-                            @elseif(in_array($order->status, ['diproses', 'packed']))
-                                <form method="POST" action="{{ route($prefix . '.orders.ship', $order) }}" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-[12px]">Kirim</button>
-                                </form>
-                            @else
-                                -
-                            @endif
+                        <td class="px-5 py-3">
+                            @php
+                                $statusOptions = [
+                                    'pending' => 'Menunggu Pembayaran',
+                                    'processing' => 'Dikemas',
+                                    'shipping' => 'Dikirim',
+                                    'valid' => 'Selesai',
+                                    'cancelled' => 'Dibatalkan',
+                                ];
+
+                                if (in_array($order->status, ['waiting', 'pending'], true)) {
+                                    $currentStatus = 'pending';
+                                } elseif (in_array($order->status, ['diproses', 'packed'], true)) {
+                                    $currentStatus = 'processing';
+                                } elseif ($order->status === 'shipping') {
+                                    $currentStatus = 'shipping';
+                                } elseif ($order->status === 'valid') {
+                                    $currentStatus = 'valid';
+                                } elseif (in_array($order->status, ['rejected', 'cancelled'], true)) {
+                                    $currentStatus = 'cancelled';
+                                } else {
+                                    $currentStatus = 'pending';
+                                }
+
+                                $isLocked = $currentStatus === 'valid';
+                            @endphp
+
+                            <form method="POST" action="{{ route($prefix . '.orders.update', $order) }}" class="flex flex-wrap gap-2 items-center">
+                                @csrf
+                                @method('PATCH')
+
+                                <select name="status" class="w-full md:w-auto px-3 py-2 border rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" {{ $isLocked ? 'disabled' : '' }}>
+                                    @foreach($statusOptions as $value => $label)
+                                        <option value="{{ $value }}" {{ $currentStatus === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+
+                                <button type="submit" class="px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition {{ $isLocked ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $isLocked ? 'disabled' : '' }}>
+                                    Update
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     @empty
@@ -207,7 +274,7 @@
         {{ $orders->withQueryString()->links() }}
 
         <div x-show="showModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div @click.away="close()" class="bg-white w-full max-w-md p-6 rounded-lg relative">
+            <div @click.away="close()" @keydown.escape.window="close()" class="bg-white w-full max-w-xl p-6 rounded-lg relative shadow-xl">
                 <h3 class="text-lg font-bold mb-4">Bukti Pembayaran</h3>
                 <div class="mb-2">
                     <strong>ID Transaksi:</strong> #<span x-text="selected.id"></span>
@@ -219,7 +286,7 @@
                     <strong>Total:</strong> Rp <span x-text="formatMoney(selected.total)"></span>
                 </div>
                 <div class="mb-2">
-                    <strong>Metode:</strong> <span x-text="selected.method"></span>
+                    <strong>Metode:</strong> <span x-text="selected.payment_method ?? selected.method ?? 'N/A'"></span>
                 </div>
                 <div class="mb-2">
                     <strong>Tanggal:</strong> <span x-text="formatDate(selected.created_at)"></span>
@@ -227,35 +294,19 @@
                 <div class="mb-2">
                     <strong>Status:</strong> <span x-text="statusText(selected.status)"></span>
                 </div>
-                <template x-if="selected.proof_image">
+                <template x-if="selected.proof_exists">
                     <div class="mb-4">
                         <strong>Bukti:</strong>
                         <div class="mt-2">
-                            <img :src="`/storage/${selected.proof_image}`" class="max-h-40 object-contain" alt="Bukti pembayaran">
+                            <img :src="selected.proof_image_url" class="w-full h-auto max-h-[550px] object-contain rounded-lg border border-slate-200" alt="Bukti pembayaran">
                         </div>
                     </div>
                 </template>
-                <div class="mt-4 flex justify-end space-x-2">
-                    <template x-if="selected.status === 'diproses' || selected.status === 'packed'">
-                        <form :action="`/${prefix}/orders/${selected.id}/shipping`" method="POST" class="inline">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Kirim</button>
-                        </form>
-                    </template>
-                    <form :action="`/${prefix}/orders/${selected.id}`" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="valid">
-                        <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded">Terima</button>
-                    </form>
-                    <form :action="`/${prefix}/orders/${selected.id}`" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="rejected">
-                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Tolak</button>
-                    </form>
-                    <button @click="close()" class="px-4 py-2 bg-gray-200 rounded">Kembali</button>
+                <template x-if="!selected.proof_exists">
+                    <div class="mb-4 text-sm text-red-600">Bukti pembayaran belum diunggah atau file tidak ditemukan.</div>
+                </template>
+                <div class="mt-4 flex justify-end">
+                    <button @click="close()" class="px-4 py-2 bg-gray-200 text-slate-700 rounded-lg hover:bg-gray-300 transition">Tutup</button>
                 </div>
             </div>
         </div>

@@ -308,7 +308,7 @@
             button.addEventListener('click', function () {
                 if (button.disabled) return;
 
-                selectedSize = sizeKey;
+                selectedSize = String(sizeKey); // Pastikan string
                 selectedStock = stock;
                 qty = 1;
                 selectedSizeInput.value = selectedSize;
@@ -349,10 +349,19 @@
             e.preventDefault();
             if (addCartButton.disabled) return;
 
+            // Pastikan selectedSize adalah string
+            if (!selectedSize || typeof selectedSize !== 'string') {
+                alert('Silakan pilih ukuran terlebih dahulu!');
+                return;
+            }
+
+            const productId = "{{ $product->id }}";
+            const url = "{{ route('cart.add', $product->id) }}";
+
             const formData = new FormData(form);
             formData.append('action', 'cart');
 
-            fetch(form.action, {
+            fetch(url, {
                 method: 'POST',
                 body: formData,
                 headers: {
