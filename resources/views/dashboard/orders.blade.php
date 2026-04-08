@@ -18,6 +18,7 @@
             'all' => 'Semua',
             'menunggu' => 'Menunggu',
             'dikemas' => 'Dikemas',
+            'dikirim' => 'Dikirim',
             'selesai' => 'Selesai',
         ];
     @endphp
@@ -35,15 +36,21 @@
     @else
         @foreach($orders as $order)
             @php
-                if ($order->status === 'waiting') {
+                if (in_array($order->status, ['waiting', 'pending'])) {
                     $badgeClass = 'bg-yellow-100 text-yellow-800';
-                    $statusLabel = 'Menunggu';
-                } elseif ($order->status === 'packed') {
+                    $statusLabel = 'Menunggu Pembayaran';
+                } elseif (in_array($order->status, ['diproses', 'packed'])) {
                     $badgeClass = 'bg-blue-100 text-blue-800';
-                    $statusLabel = 'Dikemas';
+                    $statusLabel = 'Sedang Dikemas';
+                } elseif ($order->status === 'shipping') {
+                    $badgeClass = 'bg-blue-100 text-blue-800';
+                    $statusLabel = 'Sedang Dikirim';
                 } elseif ($order->status === 'valid') {
                     $badgeClass = 'bg-green-100 text-green-800';
                     $statusLabel = 'Selesai';
+                } elseif (in_array($order->status, ['rejected', 'cancelled'])) {
+                    $badgeClass = 'bg-red-100 text-red-800';
+                    $statusLabel = 'Dibatalkan';
                 } else {
                     $badgeClass = 'bg-slate-100 text-slate-700';
                     $statusLabel = ucfirst($order->status);
@@ -83,8 +90,15 @@
 
                 <div class="mt-4 text-right font-bold text-lg text-slate-900">Total: Rp {{ number_format($order->total, 0, ',', '.') }}</div>
 
-                <div class="mt-4 text-right">
-                    <a href="{{ route('orders.show', $order->id) }}" class="inline-block px-5 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">Lihat Detail</a>
+                <div class="mt-4 text-right flex flex-wrap justify-end gap-2">
+                    @if($order->status === 'shipping')
+                        <form method="POST" action="{{ route('orders.receive', $order->id) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition">Pesanan Diterima</button>
+                        </form>
+                    @endif
+                    <a href="{{ route('orders.show', $order->id) }}" class="inline-flex items-center justify-center px-5 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">Lihat Detail</a>
                 </div>
             </div>
         @endforeach
@@ -144,6 +158,10 @@
                                 <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Diproses</span>
                             @elseif($order->status == 'pending')
                                 <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">Pending</span>
+                            @elseif($order->status == 'packed')
+                                <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Dikemas</span>
+                            @elseif($order->status == 'shipping')
+                                <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Dikirim</span>
                             @elseif($order->status == 'valid')
                                 <span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Diterima</span>
                             @elseif($order->status == 'rejected')
@@ -153,7 +171,7 @@
                             @endif
                         </td>
                         <td class="px-5 py-3 space-x-2">
-                            @if(in_array($order->status, ['waiting', 'pending', 'diproses']))
+                            @if(in_array($order->status, ['waiting', 'pending']))
                                 <form method="POST" action="{{ route($prefix . '.orders.update', $order) }}" class="inline">
                                     @csrf
                                     @method('PATCH')
@@ -165,6 +183,12 @@
                                     @method('PATCH')
                                     <input type="hidden" name="status" value="rejected">
                                     <button type="submit" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[12px]">Tolak</button>
+                                </form>
+                            @elseif(in_array($order->status, ['diproses', 'packed']))
+                                <form method="POST" action="{{ route($prefix . '.orders.ship', $order) }}" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-[12px]">Kirim</button>
                                 </form>
                             @else
                                 -
@@ -212,6 +236,13 @@
                     </div>
                 </template>
                 <div class="mt-4 flex justify-end space-x-2">
+                    <template x-if="selected.status === 'diproses' || selected.status === 'packed'">
+                        <form :action="`/${prefix}/orders/${selected.id}/shipping`" method="POST" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Kirim</button>
+                        </form>
+                    </template>
                     <form :action="`/${prefix}/orders/${selected.id}`" method="POST">
                         @csrf
                         @method('PATCH')
@@ -255,6 +286,8 @@
             statusText(status) {
                 if(status === 'waiting' || status === 'diproses') return 'Diproses';
                 if(status === 'pending') return 'Pending';
+                if(status === 'packed') return 'Dikemas';
+                if(status === 'shipping') return 'Dikirim';
                 if(status === 'valid') return 'Diterima';
                 if(status === 'rejected') return 'Ditolak';
                 return status;

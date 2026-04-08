@@ -28,7 +28,14 @@
         <div class="space-y-6">
             <div class="rounded-[32px] bg-white border border-slate-200 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.2)] p-6 sm:p-8">
                 <h1 class="text-2xl font-semibold text-slate-900">{{ $statusLabel }}</h1>
-                <p class="mt-2 text-sm text-slate-500">Sisa waktu pembayaran: <span id="payment-timer" class="font-semibold text-red-600">--:--</span></p>
+                @if($order->status === 'shipping')
+                    <p class="mt-2 text-sm text-blue-700 font-semibold">Paket dikirim pada {{ optional($order->updated_at)->format('d F Y H:i') }}</p>
+                    <p class="mt-2 text-sm text-blue-600">Pesanan Anda sedang dalam perjalanan oleh kurir Shoegaze.</p>
+                @elseif($order->status === 'valid')
+                    <p class="mt-2 text-sm text-green-700 font-semibold">Pesanan diterima pada {{ optional($order->updated_at)->format('d F Y H:i') }}</p>
+                @else
+                    <p class="mt-2 text-sm text-slate-500">Sisa waktu pembayaran: <span id="payment-timer" class="font-semibold text-red-600">--:--</span></p>
+                @endif
             </div>
 
             <div class="grid gap-6 lg:grid-cols-[1.65fr_1fr]">

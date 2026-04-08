@@ -17,9 +17,11 @@ class OrderController extends Controller
 
         if ($statusFilter !== 'all') {
             if ($statusFilter === 'menunggu') {
-                $query->where('status', 'waiting');
+                $query->whereIn('status', ['waiting', 'pending']);
             } elseif ($statusFilter === 'dikemas') {
-                $query->where('status', 'packed');
+                $query->whereIn('status', ['diproses', 'packed']);
+            } elseif ($statusFilter === 'dikirim') {
+                $query->where('status', 'shipping');
             } elseif ($statusFilter === 'selesai') {
                 $query->where('status', 'valid');
             }

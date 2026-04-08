@@ -758,6 +758,24 @@ class CartController extends Controller
         }
     }
 
+    public function confirmReceived(Request $request, $id)
+    {
+        $order = Transaction::findOrFail($id);
+
+        if (auth()->id() !== $order->user_id) {
+            abort(403);
+        }
+
+        if ($order->status !== 'shipping') {
+            return redirect()->back()->with('error', 'Pesanan tidak dapat dikonfirmasi saat ini.');
+        }
+
+        $order->status = 'valid';
+        $order->save();
+
+        return redirect()->back()->with('success', 'Pesanan berhasil dikonfirmasi sebagai diterima.');
+    }
+
     public function count()
     {
         $cart = session()->get('cart', []);

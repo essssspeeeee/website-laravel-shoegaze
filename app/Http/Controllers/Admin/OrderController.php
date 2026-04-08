@@ -28,7 +28,7 @@ class OrderController extends Controller
     public function update(Request $request, Transaction $order)
     {
         $request->validate([
-            'status' => 'required|in:waiting,valid,rejected',
+            'status' => 'required|in:waiting,valid,rejected,shipping',
         ]);
 
         $order->status = $request->status;
@@ -37,5 +37,19 @@ class OrderController extends Controller
         $route = auth()->user() && auth()->user()->role === 'petugas' ? 'staff.orders.index' : 'admin.orders.index';
         return redirect()->route($route)
                          ->with('success', 'Status transaksi berhasil diperbarui.');
+    }
+
+    public function kirimPesanan(Transaction $order)
+    {
+        if (! in_array($order->status, ['diproses', 'packed'], true)) {
+            abort(403);
+        }
+
+        $order->status = 'shipping';
+        $order->save();
+
+        $route = auth()->user() && auth()->user()->role === 'petugas' ? 'staff.orders.index' : 'admin.orders.index';
+        return redirect()->route($route)
+                         ->with('success', 'Status pesanan berhasil diperbarui menjadi Dikirim.');
     }
 }

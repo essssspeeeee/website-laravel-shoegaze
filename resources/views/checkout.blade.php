@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('order.store') }}" class="space-y-6">
+            <form method="POST" action="{{ route('order.store') }}" @submit.prevent="validateAndSubmit()" class="space-y-6">
                 @csrf
                 @if(request('product_id'))
                     <input type="hidden" name="product_id" value="{{ request('product_id') }}">
@@ -338,6 +338,13 @@
                 this.addressForm.jalan = address.jalan || '';
                 this.showAddressFormModal = true;
                 this.showAddressModal = false;
+                // Focus to address textarea after modal opens
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        const textarea = document.querySelector('textarea[name="jalan"]');
+                        if (textarea) textarea.focus();
+                    }, 100);
+                });
             },
             closeAddressForm() {
                 this.showAddressFormModal = false;
@@ -380,6 +387,16 @@
                     currency: 'IDR',
                     maximumFractionDigits: 0,
                 }).format(value);
+            },
+            validateAndSubmit() {
+                const activeAddr = this.activeAddress();
+                if (!activeAddr.jalan || activeAddr.jalan.trim() === '') {
+                    alert('Mau kirim ke mana? Mohon isi alamat tujuan Anda dulu ya, supaya sepatu impianmu sampai dengan tepat!');
+                    this.openAddressForm(this.selectedAddressIndex);
+                    return;
+                }
+                // If valid, submit the form
+                this.$el.submit();
             },
         };
     }

@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
             ->group(function () {
                 Route::resource('products', 'ProductController')->except(['show']);
                 Route::resource('orders', 'OrderController')->only(['index','update']);
+                Route::patch('orders/{order}/shipping', [\App\Http\Controllers\Admin\OrderController::class, 'kirimPesanan'])->name('orders.ship');
                 Route::resource('users', 'UserController')->except(['show']);
                 Route::get('history', 'HistoryController@index')->name('history');
             });
@@ -82,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
                 // permit petugas to view orders as well
                 Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
                 Route::patch('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('orders.update');
+                Route::patch('orders/{order}/shipping', [\App\Http\Controllers\Admin\OrderController::class, 'kirimPesanan'])->name('orders.ship');
                 // riwayat pesanan untuk petugas (sama seperti admin)
                 Route::get('history', 'HistoryController@index')->name('history');
 
@@ -109,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
         // Route::post('/checkout/address', [CartController::class, 'saveAddress'])->name('checkout.address.store');
         Route::get('/orders/{id}', [CartController::class, 'showOrder'])->name('orders.show');
         Route::post('/orders/{id}/upload', [CartController::class, 'uploadProof'])->name('orders.upload');
+        Route::patch('/orders/{id}/receive', [CartController::class, 'confirmReceived'])->name('orders.receive');
     });
 
     // Fitur Keranjang (untuk semua role yang sudah login - di luar user role group)
