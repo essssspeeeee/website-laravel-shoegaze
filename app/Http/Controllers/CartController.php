@@ -814,7 +814,7 @@ class CartController extends Controller
             $filePath = $file->storeAs('proof_payments', $fileName, 'public');
 
             $order->update([
-                'proof_image' => 'storage/' . $filePath,
+                'proof_image' => $filePath,
                 'status' => 'waiting',
             ]);
 

@@ -108,44 +108,6 @@
             @endforeach
         </div>
 
-        <div class="mb-8">
-            <div class="flex items-center gap-3 mb-2">
-                <div class="w-4 h-9 bg-[#db4444] rounded-sm"></div>
-                <span class="text-[#db4444] font-bold text-sm">Unggulan</span>
-            </div>
-            <h2 class="text-3xl font-bold mb-8 tracking-tight">Produk Baru</h2>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto md:h-[600px] mb-10">
-            <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                <div class="absolute top-10 left-10 bg-white p-6 rounded-lg shadow-xl max-w-[240px]">
-                    <h4 class="font-black text-2xl italic uppercase mb-1 leading-none tracking-tighter">KANZAKI 2.0</h4>
-                    <p class="text-xs text-gray-500 font-medium">Run Strong. Run Confident.</p>
-                </div>
-            </div>
-            
-            <div class="grid grid-rows-2 gap-6">
-                <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                    <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                    <div class="absolute top-6 right-6 bg-white p-5 rounded-lg shadow-lg max-w-[200px]">
-                        <h4 class="font-black text-sm uppercase mb-1">AURORUM CITY</h4>
-                        <p class="text-[10px] text-gray-500 leading-tight">Light. Responsive. Built to Run Everyday.</p>
-                    </div>
-                </div>
-                <div class="relative rounded-2xl overflow-hidden group bg-gray-100">
-                    <img src="{{ asset('images/HAZEFLOW.jpg.webp') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                    <div class="absolute bottom-6 right-6 bg-white p-5 rounded-lg shadow-lg max-w-[220px]">
-                        <h4 class="font-black text-sm italic uppercase mb-1">Haze Flow</h4>
-                        <p class="text-[10px] text-gray-500 leading-relaxed">
-                            <span class="font-semibold text-gray-800">Categories:</span> Road Running<br>
-                            <span class="font-semibold text-gray-800">Best for:</span> Raceday (10K-42K)
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 
     <div x-data="{ show: false, message: '' }" 

@@ -55,6 +55,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('orders/{order}/shipping', [\App\Http\Controllers\Admin\OrderController::class, 'kirimPesanan'])->name('orders.ship');
                 Route::resource('users', 'UserController')->except(['show']);
                 Route::get('history', 'HistoryController@index')->name('history');
+                Route::get('sales-report', 'SalesReportController@index')->name('sales-report');
+                Route::get('sales-report/download-pdf', 'SalesReportController@downloadPdf')->name('sales-report.download-pdf');
             });
     });
 
@@ -88,13 +90,91 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('history', 'HistoryController@index')->name('history');
 
                 // sales report page for petugas with simple statistics
-                Route::get('sales', function () {
-                    $total     = \App\Models\Transaction::count();
-                    $valid     = \App\Models\Transaction::where('status', 'valid')->count();
-                    $waiting   = \App\Models\Transaction::where('status', 'waiting')->count();
-                    $rejected  = \App\Models\Transaction::where('status', 'rejected')->count();
-                    return view('dashboard.staff_sales', compact('total','valid','waiting','rejected'));
+                Route::get('sales', function (Illuminate\Http\Request $request) {
+                    $month = $request->get('month', now()->format('m'));
+                    $year = $request->get('year', now()->format('Y'));
+
+                    $query = \App\Models\Transaction::whereYear('created_at', $year)
+                                                   ->whereMonth('created_at', $month);
+
+                    $total = (clone $query)->count();
+                    $totalRevenue = (clone $query)->where('status', 'valid')->sum('total');
+                    $valid = (clone $query)->where('status', 'valid')->count();
+                    $waiting = (clone $query)->where('status', 'pending')->count();
+                    $rejected = (clone $query)->where('status', 'cancelled')->count();
+
+                    $transactions = \App\Models\Transaction::with('user')
+                        ->whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+                    // Chart data
+                    $dailySales = \App\Models\Transaction::selectRaw('DATE(created_at) as date, SUM(total) as total')
+                        ->whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->where('status', 'valid')
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('total', 'date')
+                        ->toArray();
+
+                    $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
+                    $chartLabels = [];
+                    $chartData = [];
+
+                    for ($day = 1; $day <= $daysInMonth; $day++) {
+                        $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+                        $chartLabels[] = $day;
+                        $chartData[] = $dailySales[$date] ?? 0;
+                    }
+
+                    return view('dashboard.staff_sales', compact(
+                        'month', 'year', 'total', 'totalRevenue', 'valid', 'waiting', 'rejected',
+                        'transactions', 'chartLabels', 'chartData'
+                    ));
                 })->name('sales');
+                Route::get('sales/download-pdf', function (Illuminate\Http\Request $request) {
+                    $month = $request->get('month', now()->format('m'));
+                    $year = $request->get('year', now()->format('Y'));
+
+                    $query = \App\Models\Transaction::whereYear('created_at', $year)
+                                                   ->whereMonth('created_at', $month);
+
+                    $total = (clone $query)->count();
+                    $totalRevenue = (clone $query)->where('status', 'valid')->sum('total');
+                    $valid = (clone $query)->where('status', 'valid')->count();
+                    $waiting = (clone $query)->where('status', 'pending')->count();
+                    $rejected = (clone $query)->where('status', 'cancelled')->count();
+
+                    $transactions = \App\Models\Transaction::with('user')
+                        ->whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+                    $monthNames = [
+                        '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                        '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                        '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                    ];
+
+                    $data = [
+                        'month' => $monthNames[$month],
+                        'year' => $year,
+                        'totalTransactions' => $total,
+                        'totalRevenue' => $totalRevenue,
+                        'validCount' => $valid,
+                        'pendingCount' => $waiting,
+                        'rejectedCount' => $rejected,
+                        'transactions' => $transactions
+                    ];
+
+                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.pdf', $data);
+                    $filename = "laporan_penjualan_{$month}_{$year}.pdf";
+
+                    return $pdf->download($filename);
+                })->name('sales.download-pdf');
             });
     });
 
